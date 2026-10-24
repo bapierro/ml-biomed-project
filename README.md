@@ -5,7 +5,7 @@ The final dataset, anatomy, and model comparison await supervisor feedback.
 Pancreas segmentation across MRI sequences is a **proposed direction**, not a settled scope.
 See [research notes](docs/research-notes.md) for the discussion and references.
 
-This repository provides the environment, device checks, and a synthetic inspection example.
+This repository provides the environment, device checks, and MRI visualization notebooks.
 It contains no datasets, model weights, training pipeline, or medical experiment results.
 
 ## First setup
@@ -137,18 +137,19 @@ balanced across the supplied patients; insufficient support raises an error. Que
 are never model inputs. Whole-volume probabilities are restored to the original grid before
 thresholding; standardized slices are interpolated views, not additional acquired scans.
 
-The [real MRI results notebook](notebooks/02-real-mri-results.ipynb) evaluates saved predictions
+The [data visualization and UniverSeg notebook](notebooks/data-visualization-and-universeg.ipynb) evaluates saved predictions
 and shows aligned overlays; it downloads nothing and runs no models. Its expected output
 paths are visible in the notebook. Dice uses SciPy's implementation with input validation
 and explicit handling of two empty masks. Data, weights, scores, and executed outputs stay local.
 
 ## Working with notebooks and shared code
 
-Start with [00-environment.ipynb](notebooks/00-environment.ipynb). JupyterLab launched through
-`uv run` can import `ml_biomed_project` without changing `sys.path` or registering a global kernel.
-Then open [Inspect image and mask](notebooks/01-inspect-image-and-mask.ipynb) to check geometry
-and view a synthetic annotation overlay. Its defaults download nothing. It uses the shared
-`dice_score` function, which scores whole binary arrays and returns NaN for two empty masks.
+Use [environment-check.ipynb](notebooks/environment-check.ipynb) to verify the local setup.
+JupyterLab launched through `uv run` can import `ml_biomed_project` without changing `sys.path`
+or registering a global kernel. Open
+[data-visualization-and-universeg.ipynb](notebooks/data-visualization-and-universeg.ipynb)
+to inspect real MRI data, understand support sets, and evaluate the current 64-slice UniverSeg
+run alongside TotalSegmentator, including its segmentation failures on these cases.
 Put reusable logic in `src/ml_biomed_project/`; use notebooks for exploration and figures.
 Use **Restart Kernel and Clear Outputs of All Cells** before committing notebooks. CI checks
 that committed notebooks have no outputs or execution counts.
