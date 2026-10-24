@@ -1,4 +1,4 @@
-"""Download four development/support MRI image-mask pairs (about 13 MiB) from CrossPan."""
+"""Download two query and eight support MRI pairs (about 38 MiB) from pinned CrossPan."""
 
 from pathlib import Path
 
@@ -9,7 +9,13 @@ CASES = (
     ("T1", "val", "EMC014_T1"),
     ("T2", "val", "CAD_T2_110"),
     ("T1", "train", "EMC009_T1"),
+    ("T1", "train", "EMC010_T1"),
+    ("T1", "train", "EMC011_T1"),
+    ("T1", "train", "EMC021_T1"),
     ("T2", "train", "CAD_T2_102"),
+    ("T2", "train", "CAD_T2_107"),
+    ("T2", "train", "CAD_T2_113"),
+    ("T2", "train", "CAD_T2_120"),
 )
 
 if __name__ == "__main__":

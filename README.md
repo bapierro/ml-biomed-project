@@ -116,9 +116,10 @@ Install the optional model libraries with `uv sync --locked --extra cpu --group 
 (NVIDIA users substitute `cuda`). This adds TotalSegmentator and a pinned UniverSeg revision;
 PyTorch and torchvision builds are matched to the selected profile.
 
-Run `uv run --locked --extra cpu python scripts/download_mri_examples.py` to fetch four
-CrossPan MRI/annotation pairs (about 13 MiB): two development queries and two separate
-training patients for support. The source snapshot is pinned in the script. CrossPan is
+Run `uv run --locked --extra cpu python scripts/download_mri_examples.py` to fetch ten
+CrossPan MRI/annotation pairs (about 38 MiB): two development queries and eight separate
+training patients for support, four per sequence. Existing files are reused. The source
+snapshot is pinned in the script. CrossPan is
 [CC BY-NC 4.0](https://huggingface.co/datasets/linkai-peng/CrossPan).
 
 [TotalSegmentator](https://github.com/wasserth/TotalSegmentator) uses `--task total_mr` and
@@ -129,8 +130,12 @@ absolute folder under `models/` to keep its weights here.
 For UniverSeg, download the [official checkpoint](https://github.com/JJGO/UniverSeg/releases/download/weights/universeg_v1_nf64_ss64_STA.pt)
 (about 4.5 MiB; [model license](https://github.com/JJGO/UniverSeg/blob/833a0c34c65e38d675e21bd48ddec6797cc03259/LICENSE-model))
 into `models/universeg/`. Run `uv run --locked --extra cpu --group models python scripts/run_universeg.py --help`
-for its image, support-image, support-mask, weights, output, and device arguments. It uses
-the complete query volume, four labeled support slices, and the official 128x128 input size.
+for its arguments. Provide matching lists of support images and masks. MRI preprocessing
+clips nonzero-voxel intensity percentiles at 0.5/99.5, normalizes each volume, and resizes
+images/masks together to 128³. The default is exactly 64 distinct processed support slices,
+balanced across the supplied patients; insufficient support raises an error. Query labels
+are never model inputs. Whole-volume probabilities are restored to the original grid before
+thresholding; standardized slices are interpolated views, not additional acquired scans.
 
 The [real MRI results notebook](notebooks/02-real-mri-results.ipynb) evaluates saved predictions
 and shows aligned overlays; it downloads nothing and runs no models. Its expected output
