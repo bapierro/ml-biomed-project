@@ -7,7 +7,7 @@ weights were downloaded during environment setup. The current repository name de
 leaves room for a different research direction. Re-check dataset licenses and checkpoint
 versions before the first experiment.
 
-## Summary of our discussion
+## Summary
 
 **The leading project direction is now pancreas segmentation across T1- and T2-weighted MRI, using pretrained models on CrossPan.** This remains a proposed direction; we have not yet run the experiments.
 
