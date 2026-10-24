@@ -149,7 +149,7 @@ JupyterLab launched through `uv run` can import `ml_biomed_project` without chan
 or registering a global kernel. Open
 [data-visualization-and-universeg.ipynb](notebooks/data-visualization-and-universeg.ipynb)
 to inspect real MRI data, understand support sets, and evaluate the current 64-slice UniverSeg
-run alongside TotalSegmentator, including its segmentation failures on these cases.
+run alongside TotalSegmentator, with per-case overlap and empty slice predictions made explicit.
 Put reusable logic in `src/ml_biomed_project/`; use notebooks for exploration and figures.
 Use **Restart Kernel and Clear Outputs of All Cells** before committing notebooks. CI checks
 that committed notebooks have no outputs or execution counts.
