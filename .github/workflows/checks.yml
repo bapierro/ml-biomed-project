@@ -1,0 +1,40 @@
+name: Checks
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-14]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10
+        with:
+          version: "0.13.5"
+          enable-cache: true
+      - run: uv sync --locked --extra cpu
+      - run: uv run --locked --extra cpu ruff check .
+      - run: uv run --locked --extra cpu ruff format --check .
+      - run: uv run --locked --extra cpu pytest
+      - run: uv run --locked --extra cpu biomed-check --device cpu
+      - name: Keep notebook outputs out of commits
+        shell: python
+        run: |
+          import json
+          import pathlib
+          import sys
+          bad = []
+          for path in pathlib.Path("notebooks").rglob("*.ipynb"):
+              cells = json.loads(path.read_text(encoding="utf-8"))["cells"]
+              if any(cell.get("outputs") or cell.get("execution_count") is not None for cell in cells):
+                  bad.append(str(path))
+          if bad:
+              sys.exit("Clear notebook outputs before committing: " + ", ".join(bad))

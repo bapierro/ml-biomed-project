@@ -1,0 +1,43 @@
+# Environments, builds, caches, and platform files
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.ruff_cache/
+.cache/
+.coverage
+htmlcov/
+.DS_Store
+Thumbs.db
+.ipynb_checkpoints/
+.jupyter/
+*.log
+
+# Local datasets, checkpoints, predictions, and generated results
+/data/*
+!/data/.gitkeep
+/models/*
+!/models/.gitkeep
+/results/*
+!/results/.gitkeep
+*.nii
+*.nii.gz
+*.dcm
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+
+# Credentials and local settings
+.env
+.env.*
+*.pem
+*.key
+/token
+/stored_tokens
+.vscode/
+.idea/

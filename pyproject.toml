@@ -1,0 +1,65 @@
+[project]
+name = "ml-biomed-project"
+version = "0.1.0"
+description = "Reproducible medical image segmentation experiments for ML in Biomedicine"
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "huggingface-hub>=2.3.0,<3",
+    "matplotlib>=3.10,<4",
+    "nibabel>=5.3,<6",
+    "numpy>=2.2,<3",
+    "pandas>=2.2,<4",
+    "scipy>=1.15,<2",
+]
+
+[project.optional-dependencies]
+# The macOS wheel in the CPU index also supports MPS.
+cpu = ["torch==2.11.0"]
+cuda = ["torch==2.11.0; sys_platform == 'linux' or sys_platform == 'win32'"]
+
+[project.scripts]
+biomed-check = "ml_biomed_project.environment:main"
+
+[dependency-groups]
+dev = ["pytest>=8,<10", "ruff>=0.14,<1"]
+notebooks = ["ipykernel>=6.30,<8", "jupyterlab>=4.4,<5"]
+
+[build-system]
+requires = ["uv_build>=0.13.5,<0.14"]
+build-backend = "uv_build"
+
+[tool.uv]
+required-version = ">=0.13.5"
+conflicts = [[{ extra = "cpu" }, { extra = "cuda" }]]
+environments = [
+    "sys_platform == 'darwin' and platform_machine == 'arm64'",
+    "sys_platform == 'linux' and platform_machine == 'x86_64'",
+    "sys_platform == 'win32' and (platform_machine == 'AMD64' or platform_machine == 'x86_64')",
+]
+
+[tool.uv.sources]
+torch = [
+    { index = "pytorch-cpu", extra = "cpu" },
+    { index = "pytorch-cu128", extra = "cuda", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
+]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[[tool.uv.index]]
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
+explicit = true
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
