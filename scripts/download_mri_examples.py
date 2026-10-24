@@ -79,7 +79,7 @@ def main():
     if args.with_universeg_weights:
         download_universeg_weights()
     print("Downloads ready. The notebook can inspect the images now.")
-    print("For an optional model example, see the MRI models and examples section in README.md.")
+    print("For optional inference commands, see README.md.")
 
 
 if __name__ == "__main__":
