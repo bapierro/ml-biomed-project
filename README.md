@@ -132,6 +132,16 @@ Public downloads need no Hugging Face login. CrossPan is
 [UniverSeg model license](https://github.com/JJGO/UniverSeg/blob/833a0c34c65e38d675e21bd48ddec6797cc03259/LICENSE-model).
 The download step performs no inference.
 
+The shared [selection manifest](data/mri_examples.csv) fixes the ten scans, experimental
+roles, patient groups, and identity evidence. `source_split` records the published folder;
+`role` determines support versus evaluation. Both scripts reject a patient group used in
+both roles, across either sequence. These evaluation cases are development examples.
+The release provides sequence-specific split folders, but no complete patient crosswalk.
+EMC groups use filename subject codes; CAD groups use original IDs from the upstream
+[PanSegData T2 mapping](https://osf.io/download/9hrvs/). These are conservative exclusion groups, not
+a verified paired T1/T2 cohort. The paper describes its split protocol in
+[Appendix C](https://arxiv.org/html/2604.18797v1).
+
 The model step processes the two development queries sequentially, using **64 support
 slices from four separate patients per sequence**. It calls the existing inference script
 and saves predictions exactly where the notebook expects them. On the M1 pilot this took

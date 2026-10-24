@@ -7,7 +7,7 @@ import subprocess
 import sys
 from importlib.util import find_spec
 
-from download_mri_examples import CASES, ROOT, WEIGHTS
+from download_mri_examples import EXAMPLES, ROOT, WEIGHTS
 
 
 def main():
@@ -25,10 +25,11 @@ def main():
     environment = os.environ.copy()
     environment["TOTALSEG_WEIGHTS_PATH"] = str(ROOT / "models" / "totalsegmentator")
     environment["TOTALSEG_HOME_DIR"] = str(ROOT / "models" / "totalsegmentator-settings")
-    for sequence, split, case in CASES:
-        if split != "val":
+    for example in EXAMPLES:
+        if example["role"] != "evaluation":
             continue
-        image = ROOT / "data" / "crosspan" / sequence / "val" / "images" / f"{case}_0000.nii.gz"
+        sequence, split, case = example["sequence"], example["source_split"], example["case_id"]
+        image = ROOT / "data" / "crosspan" / sequence / split / "images" / f"{case}_0000.nii.gz"
         required = [image]
         if args.model == "universeg":
             output = (
@@ -41,11 +42,28 @@ def main():
             )
             metadata = output.with_suffix(".json")
             support = [
-                patient for seq, role, patient in CASES if seq == sequence and role == "train"
+                row for row in EXAMPLES if row["sequence"] == sequence and row["role"] == "support"
             ]
-            folder = ROOT / "data" / "crosspan" / sequence / "train"
-            images = [folder / "images" / f"{patient}_0000.nii.gz" for patient in support]
-            masks = [folder / "labels" / f"{patient}.nii.gz" for patient in support]
+            images = [
+                ROOT
+                / "data"
+                / "crosspan"
+                / sequence
+                / row["source_split"]
+                / "images"
+                / f"{row['case_id']}_0000.nii.gz"
+                for row in support
+            ]
+            masks = [
+                ROOT
+                / "data"
+                / "crosspan"
+                / sequence
+                / row["source_split"]
+                / "labels"
+                / f"{row['case_id']}.nii.gz"
+                for row in support
+            ]
             required += [*images, *masks, ROOT / WEIGHTS]
             command = [
                 sys.executable,

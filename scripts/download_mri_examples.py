@@ -9,23 +9,14 @@ from urllib.request import urlopen
 
 from huggingface_hub import snapshot_download
 
+from ml_biomed_project.mri_examples import load_mri_examples
+
 ROOT = Path(__file__).resolve().parents[1]
 REVISION = "0da3821e8af2dfa4c22d56e282372614cb426227"
 WEIGHTS = Path("models/universeg/universeg_v1_nf64_ss64_STA.pt")
 WEIGHT_URL = f"https://github.com/JJGO/UniverSeg/releases/download/weights/{WEIGHTS.name}"
 WEIGHT_SHA256 = "62c98c48c08bc05f84ed19187844d5eb7e6b7a48d2f690f2033fd8de04543884"
-CASES = (
-    ("T1", "val", "EMC014_T1"),
-    ("T2", "val", "CAD_T2_110"),
-    ("T1", "train", "EMC009_T1"),
-    ("T1", "train", "EMC010_T1"),
-    ("T1", "train", "EMC011_T1"),
-    ("T1", "train", "EMC021_T1"),
-    ("T2", "train", "CAD_T2_102"),
-    ("T2", "train", "CAD_T2_107"),
-    ("T2", "train", "CAD_T2_113"),
-    ("T2", "train", "CAD_T2_120"),
-)
+EXAMPLES = load_mri_examples(ROOT / "data" / "mri_examples.csv")
 
 
 def download_universeg_weights():
@@ -56,13 +47,17 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--data-only", action="store_true", help="Skip the UniverSeg checkpoint.")
     args = parser.parse_args()
-    print("CrossPan: 10 MRI/mask pairs, 38.4 MiB; existing downloads are reused.", flush=True)
+    print(
+        f"CrossPan: {len(EXAMPLES)} MRI/mask pairs from data/mri_examples.csv "
+        "(38.4 MiB for the committed selection); existing downloads are reused.",
+        flush=True,
+    )
     files = [
         path
-        for sequence, split, case in CASES
+        for row in EXAMPLES
         for path in (
-            f"{sequence}/{split}/images/{case}_0000.nii.gz",
-            f"{sequence}/{split}/labels/{case}.nii.gz",
+            f"{row['sequence']}/{row['source_split']}/images/{row['case_id']}_0000.nii.gz",
+            f"{row['sequence']}/{row['source_split']}/labels/{row['case_id']}.nii.gz",
         )
     ]
     snapshot_download(
@@ -72,6 +67,11 @@ def main():
         allow_patterns=files,
         local_dir=ROOT / "data" / "crosspan",
     )
+    missing = [path for path in files if not (ROOT / "data" / "crosspan" / path).is_file()]
+    if missing:
+        raise FileNotFoundError(
+            f"Selected file was not downloaded from the pinned release: {missing[0]}"
+        )
     if not args.data_only:
         download_universeg_weights()
     print("Downloads ready. The notebook can inspect the images now.")

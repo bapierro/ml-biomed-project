@@ -1,0 +1,11 @@
+role,sequence,source_split,case_id,patient_group,identity_basis
+evaluation,T1,val,EMC014_T1,EMC:14,filename_subject_code
+evaluation,T2,val,CAD_T2_110,MCF:CAD110,upstream_original_code
+support,T1,train,EMC009_T1,EMC:9,filename_subject_code
+support,T1,train,EMC010_T1,EMC:10,filename_subject_code
+support,T1,train,EMC011_T1,EMC:11,filename_subject_code
+support,T1,train,EMC021_T1,EMC:21,filename_subject_code
+support,T2,train,CAD_T2_102,MCF:CAD102,upstream_original_code
+support,T2,train,CAD_T2_107,MCF:CAD107,upstream_original_code
+support,T2,train,CAD_T2_113,MCF:CAD113,upstream_original_code
+support,T2,train,CAD_T2_120,MCF:CAD120,upstream_original_code

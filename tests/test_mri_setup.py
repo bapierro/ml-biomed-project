@@ -46,7 +46,15 @@ def test_corrupt_checkpoint_download_is_not_installed(scripts, monkeypatch):
 def test_data_download_is_selective_and_pinned(scripts, monkeypatch):
     download, _ = scripts
     calls = []
-    monkeypatch.setattr(download, "snapshot_download", lambda *a, **kw: calls.append((a, kw)))
+
+    def fake_download(*args, **kwargs):
+        calls.append((args, kwargs))
+        for filename in kwargs["allow_patterns"]:
+            path = kwargs["local_dir"] / filename
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.touch()
+
+    monkeypatch.setattr(download, "snapshot_download", fake_download)
     monkeypatch.setattr(sys, "argv", ["download_mri_examples.py", "--data-only"])
     download.main()
     assert calls[0][1]["revision"] == download.REVISION
@@ -64,7 +72,8 @@ def test_model_runner_uses_the_expected_inputs_and_reuses_completed_outputs(
     scripts, monkeypatch, model
 ):
     download, runner = scripts
-    for sequence, split, case in download.CASES:
+    for row in download.EXAMPLES:
+        sequence, split, case = row["sequence"], row["source_split"], row["case_id"]
         for kind, name in [("images", f"{case}_0000.nii.gz"), ("labels", f"{case}.nii.gz")]:
             path = runner.ROOT / "data" / "crosspan" / sequence / split / kind / name
             path.parent.mkdir(parents=True, exist_ok=True)
