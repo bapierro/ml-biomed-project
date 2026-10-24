@@ -55,7 +55,7 @@ def test_data_download_is_selective_and_pinned(scripts, monkeypatch):
             path.touch()
 
     monkeypatch.setattr(download, "snapshot_download", fake_download)
-    monkeypatch.setattr(sys, "argv", ["download_mri_examples.py", "--data-only"])
+    monkeypatch.setattr(sys, "argv", ["download_mri_examples.py"])
     download.main()
     assert calls[0][1]["revision"] == download.REVISION
     assert calls[0][1]["repo_type"] == "dataset"
@@ -72,6 +72,11 @@ def test_model_runner_uses_the_expected_inputs_and_reuses_completed_outputs(
     scripts, monkeypatch, model
 ):
     download, runner = scripts
+    if model == "totalsegmentator":
+        # An inventory row unused by this model must not impose UniverSeg's support rules.
+        scans = [dict(row) for row in runner.EXAMPLES]
+        scans[6]["patient_group"] = scans[0]["patient_group"]
+        monkeypatch.setattr(runner, "EXAMPLES", scans)
     for row in download.EXAMPLES:
         sequence, split, case = row["sequence"], row["source_split"], row["case_id"]
         for kind, name in [("images", f"{case}_0000.nii.gz"), ("labels", f"{case}.nii.gz")]:
@@ -117,7 +122,9 @@ def test_model_runner_uses_the_expected_inputs_and_reuses_completed_outputs(
 
 def test_runner_missing_inputs_give_setup_instructions(scripts, monkeypatch, capsys):
     _, runner = scripts
-    monkeypatch.setattr(sys, "argv", ["run_mri_examples.py", "--device", "cpu"])
+    monkeypatch.setattr(
+        sys, "argv", ["run_mri_examples.py", "--model", "universeg", "--device", "cpu"]
+    )
     monkeypatch.setattr(runner.subprocess, "run", lambda *a, **kw: pytest.fail("Inference was run"))
     with pytest.raises(SystemExit, match="2"):
         runner.main()
@@ -129,8 +136,23 @@ def test_runner_does_not_overwrite_an_incomplete_prediction(scripts, monkeypatch
     output = runner.ROOT / "results/universeg-preprocessing-64/T1/EMC014_T1/pancreas.nii.gz"
     output.parent.mkdir(parents=True)
     output.write_bytes(b"preserve this output")
-    monkeypatch.setattr(sys, "argv", ["run_mri_examples.py", "--device", "cpu"])
+    monkeypatch.setattr(
+        sys, "argv", ["run_mri_examples.py", "--model", "universeg", "--device", "cpu"]
+    )
     with pytest.raises(SystemExit, match="2"):
         runner.main()
     assert "Incomplete output" in capsys.readouterr().err
     assert output.read_bytes() == b"preserve this output"
+
+
+def test_universeg_example_rejects_patient_overlap_before_inference(scripts, monkeypatch):
+    _, runner = scripts
+    scans = [dict(row) for row in runner.EXAMPLES]
+    scans[6]["patient_group"] = scans[0]["patient_group"]
+    monkeypatch.setattr(runner, "EXAMPLES", scans)
+    monkeypatch.setattr(
+        sys, "argv", ["run_mri_examples.py", "--model", "universeg", "--device", "cpu"]
+    )
+    monkeypatch.setattr(runner.subprocess, "run", lambda *a, **kw: pytest.fail("Inference was run"))
+    with pytest.raises(ValueError, match="Patient overlap"):
+        runner.main()

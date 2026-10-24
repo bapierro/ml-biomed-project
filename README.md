@@ -112,35 +112,42 @@ never put tokens in notebooks, source files, or Git.
 
 ## MRI models and examples
 
-From the repository root, prepare the data and generate the UniverSeg predictions:
+The current MRI scripts are a small CrossPan example; they do not determine the project's
+final dataset, modality, or models. To inspect the data, download only the scans and masks:
+
+```sh
+uv run --locked --extra cpu python scripts/download_mri_examples.py
+```
+
+To run the current UniverSeg example as well:
 
 ```sh
 uv sync --locked --extra cpu --group models --group notebooks
-uv run --locked --extra cpu python scripts/download_mri_examples.py
-uv run --locked --extra cpu --group models python scripts/run_mri_examples.py
+uv run --locked --extra cpu python scripts/download_mri_examples.py --with-universeg-weights
+uv run --locked --extra cpu --group models python scripts/run_mri_examples.py --model universeg
 uv run --locked --extra cpu --group notebooks jupyter lab
 ```
 
 NVIDIA users substitute `cuda` for `cpu`. The runner selects CUDA, MPS, or CPU automatically;
 use `--device cpu`, `--device mps`, or `--device cuda` to choose explicitly.
 
-The download step fetches only ten CrossPan MRI/mask pairs (**38.4 MiB**) from a pinned
-snapshot, plus the official UniverSeg checkpoint (**4.5 MiB**, SHA256-verified). Existing
-files are reused. Use `--data-only` to skip the checkpoint when only inspecting images.
+The default download is ten CrossPan MRI/mask pairs (**38.4 MiB**) from a pinned snapshot.
+`--with-universeg-weights` explicitly adds the official checkpoint (**4.5 MiB**, SHA256-verified).
+Existing files are reused.
 Public downloads need no Hugging Face login. CrossPan is
 [CC BY-NC 4.0](https://huggingface.co/datasets/linkai-peng/CrossPan); see the
 [UniverSeg model license](https://github.com/JJGO/UniverSeg/blob/833a0c34c65e38d675e21bd48ddec6797cc03259/LICENSE-model).
 The download step performs no inference.
 
-The shared [selection manifest](data/mri_examples.csv) fixes the ten scans, experimental
-roles, patient groups, and identity evidence. `source_split` records the published folder;
-`role` determines support versus evaluation. Both scripts reject a patient group used in
-both roles, across either sequence. These evaluation cases are development examples.
+The [CrossPan inventory](data/crosspan_examples.csv) records scan facts: IDs, sequence,
+source folder, patient group, and identity evidence. It assigns no model or experiment roles.
+The current query cases and UniverSeg support cases are small lists at the top of
+`scripts/run_mri_examples.py`; patient separation is checked when that example is run.
+Other models can use the same scans differently.
 The release provides sequence-specific split folders, but no complete patient crosswalk.
 EMC groups use filename subject codes; CAD groups use original IDs from the upstream
-[PanSegData T2 mapping](https://osf.io/download/9hrvs/). These are conservative exclusion groups, not
-a verified paired T1/T2 cohort. The paper describes its split protocol in
-[Appendix C](https://arxiv.org/html/2604.18797v1).
+[PanSegData T2 mapping](https://osf.io/download/9hrvs/). They are conservative exclusion groups,
+not a verified paired cohort. Both query scans are previously inspected development cases.
 
 The model step processes the two development queries sequentially, using **64 support
 slices from four separate patients per sequence**. It calls the existing inference script

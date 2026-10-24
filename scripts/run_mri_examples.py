@@ -1,4 +1,4 @@
-"""Generate the two saved predictions expected by the MRI visualization notebook."""
+"""Run the current MRI example; these selections do not define the project's dataset roles."""
 
 import argparse
 import os
@@ -9,15 +9,46 @@ from importlib.util import find_spec
 
 from download_mri_examples import EXAMPLES, ROOT, WEIGHTS
 
+from ml_biomed_project.data import check_patient_separation
+
+# Choices for this development example only. The data inventory contains no experiment roles.
+QUERY_CASES = ("EMC014_T1", "CAD_T2_110")
+UNIVERSEG_SUPPORT_CASES = (
+    "EMC009_T1",
+    "EMC010_T1",
+    "EMC011_T1",
+    "EMC021_T1",
+    "CAD_T2_102",
+    "CAD_T2_107",
+    "CAD_T2_113",
+    "CAD_T2_120",
+)
+
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--model", choices=("universeg", "totalsegmentator"), default="universeg")
+    parser.add_argument("--model", choices=("universeg", "totalsegmentator"), required=True)
     parser.add_argument("--device", choices=("auto", "cpu", "mps", "cuda"), default="auto")
     parser.add_argument(
         "--dry-run", action="store_true", help="Show commands without running models."
     )
     args = parser.parse_args()
+    queries = [row for row in EXAMPLES if row["case_id"] in QUERY_CASES]
+    if {row["case_id"] for row in queries} != set(QUERY_CASES):
+        parser.error("The current example's query cases are missing from the scan inventory.")
+    support_pool = []
+    if args.model == "universeg":
+        support_pool = [row for row in EXAMPLES if row["case_id"] in UNIVERSEG_SUPPORT_CASES]
+        if {row["case_id"] for row in support_pool} != set(UNIVERSEG_SUPPORT_CASES):
+            parser.error(
+                "The current UniverSeg example's support cases are missing from the inventory."
+            )
+        check_patient_separation(queries, support_pool)
+        patients = [
+            (row["sequence"], row["patient_group"].strip().casefold()) for row in support_pool
+        ]
+        if len(patients) != len(set(patients)):
+            parser.error("The current UniverSeg support pool repeats a patient within a sequence.")
 
     from ml_biomed_project.devices import select_device
 
@@ -25,9 +56,7 @@ def main():
     environment = os.environ.copy()
     environment["TOTALSEG_WEIGHTS_PATH"] = str(ROOT / "models" / "totalsegmentator")
     environment["TOTALSEG_HOME_DIR"] = str(ROOT / "models" / "totalsegmentator-settings")
-    for example in EXAMPLES:
-        if example["role"] != "evaluation":
-            continue
+    for example in queries:
         sequence, split, case = example["sequence"], example["source_split"], example["case_id"]
         image = ROOT / "data" / "crosspan" / sequence / split / "images" / f"{case}_0000.nii.gz"
         required = [image]
@@ -41,9 +70,7 @@ def main():
                 / "pancreas.nii.gz"
             )
             metadata = output.with_suffix(".json")
-            support = [
-                row for row in EXAMPLES if row["sequence"] == sequence and row["role"] == "support"
-            ]
+            support = [row for row in support_pool if row["sequence"] == sequence]
             images = [
                 ROOT
                 / "data"
@@ -125,9 +152,10 @@ def main():
             continue
         missing = [path for path in required if not path.is_file()]
         if missing:
+            weights_option = " --with-universeg-weights" if args.model == "universeg" else ""
             parser.error(
                 f"Missing input: {missing[0]}. First run: "
-                "uv run --locked --extra cpu python scripts/download_mri_examples.py"
+                f"uv run --locked --extra cpu python scripts/download_mri_examples.py{weights_option}"
             )
         if find_spec(args.model) is None:
             parser.error(

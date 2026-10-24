@@ -1,4 +1,4 @@
-"""Download the small MRI subset and UniverSeg checkpoint needed for the notebook."""
+"""Download a pinned CrossPan sample; model weights are an explicit optional download."""
 
 import argparse
 import hashlib
@@ -9,14 +9,14 @@ from urllib.request import urlopen
 
 from huggingface_hub import snapshot_download
 
-from ml_biomed_project.mri_examples import load_mri_examples
+from ml_biomed_project.data import load_scan_inventory
 
 ROOT = Path(__file__).resolve().parents[1]
 REVISION = "0da3821e8af2dfa4c22d56e282372614cb426227"
 WEIGHTS = Path("models/universeg/universeg_v1_nf64_ss64_STA.pt")
 WEIGHT_URL = f"https://github.com/JJGO/UniverSeg/releases/download/weights/{WEIGHTS.name}"
 WEIGHT_SHA256 = "62c98c48c08bc05f84ed19187844d5eb7e6b7a48d2f690f2033fd8de04543884"
-EXAMPLES = load_mri_examples(ROOT / "data" / "mri_examples.csv")
+EXAMPLES = load_scan_inventory(ROOT / "data" / "crosspan_examples.csv")
 
 
 def download_universeg_weights():
@@ -45,10 +45,14 @@ def download_universeg_weights():
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--data-only", action="store_true", help="Skip the UniverSeg checkpoint.")
+    parser.add_argument(
+        "--with-universeg-weights",
+        action="store_true",
+        help="Also download the 4.5 MiB UniverSeg checkpoint.",
+    )
     args = parser.parse_args()
     print(
-        f"CrossPan: {len(EXAMPLES)} MRI/mask pairs from data/mri_examples.csv "
+        f"CrossPan: {len(EXAMPLES)} MRI/mask pairs from data/crosspan_examples.csv "
         "(38.4 MiB for the committed selection); existing downloads are reused.",
         flush=True,
     )
@@ -72,12 +76,10 @@ def main():
         raise FileNotFoundError(
             f"Selected file was not downloaded from the pinned release: {missing[0]}"
         )
-    if not args.data_only:
+    if args.with_universeg_weights:
         download_universeg_weights()
     print("Downloads ready. The notebook can inspect the images now.")
-    print(
-        "To generate predictions: uv run --locked --extra cpu --group models python scripts/run_mri_examples.py"
-    )
+    print("For an optional model example, see the MRI models and examples section in README.md.")
 
 
 if __name__ == "__main__":
