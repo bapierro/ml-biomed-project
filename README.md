@@ -110,6 +110,33 @@ here so it runs under the project's Python 3.12 environment. Public dataset meta
 queried anonymously. For gated/private resources, authenticate with `uv run --extra cpu hf auth login`;
 never put tokens in notebooks, source files, or Git.
 
+## MRI models and examples
+
+Install the optional model libraries with `uv sync --locked --extra cpu --group models --group notebooks`
+(NVIDIA users substitute `cuda`). This adds TotalSegmentator and a pinned UniverSeg revision;
+PyTorch and torchvision builds are matched to the selected profile.
+
+Run `uv run --locked --extra cpu python scripts/download_mri_examples.py` to fetch four
+CrossPan MRI/annotation pairs (about 13 MiB): two development queries and two separate
+training patients for support. The source snapshot is pinned in the script. CrossPan is
+[CC BY-NC 4.0](https://huggingface.co/datasets/linkai-peng/CrossPan).
+
+[TotalSegmentator](https://github.com/wasserth/TotalSegmentator) uses `--task total_mr` and
+`--device mps` on Apple silicon (`--device gpu` on NVIDIA). Its default model downloads
+two MRI weight archives, about 442 MiB, on first use. Set `TOTALSEG_WEIGHTS_PATH` to an
+absolute folder under `models/` to keep its weights here.
+
+For UniverSeg, download the [official checkpoint](https://github.com/JJGO/UniverSeg/releases/download/weights/universeg_v1_nf64_ss64_STA.pt)
+(about 4.5 MiB; [model license](https://github.com/JJGO/UniverSeg/blob/833a0c34c65e38d675e21bd48ddec6797cc03259/LICENSE-model))
+into `models/universeg/`. Run `uv run --locked --extra cpu --group models python scripts/run_universeg.py --help`
+for its image, support-image, support-mask, weights, output, and device arguments. It uses
+the complete query volume, four labeled support slices, and the official 128x128 input size.
+
+The [real MRI results notebook](notebooks/02-real-mri-results.ipynb) evaluates saved predictions
+and shows aligned overlays; it downloads nothing and runs no models. Its expected output
+paths are visible in the notebook. Dice uses SciPy's implementation with input validation
+and explicit handling of two empty masks. Data, weights, scores, and executed outputs stay local.
+
 ## Working with notebooks and shared code
 
 Start with [00-environment.ipynb](notebooks/00-environment.ipynb). JupyterLab launched through

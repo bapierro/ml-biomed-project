@@ -2,6 +2,7 @@
 
 import numpy as np
 from numpy.typing import ArrayLike
+from scipy.spatial.distance import dice
 
 
 def dice_score(prediction: ArrayLike, reference: ArrayLike) -> float:
@@ -22,8 +23,6 @@ def dice_score(prediction: ArrayLike, reference: ArrayLike) -> float:
         if mask.dtype.kind not in "buif" or not np.all((mask == 0) | (mask == 1)):
             raise ValueError(f"{name} must contain only binary boolean or numeric 0/1 values.")
 
-    foreground = np.count_nonzero(prediction) + np.count_nonzero(reference)
-    if foreground == 0:
+    if not np.any(prediction) and not np.any(reference):
         return float("nan")
-    intersection = np.count_nonzero(np.logical_and(prediction, reference))
-    return float(2 * intersection / foreground)
+    return float(1 - dice(prediction.astype(bool).ravel(), reference.astype(bool).ravel()))
