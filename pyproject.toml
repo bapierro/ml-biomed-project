@@ -15,8 +15,11 @@ dependencies = [
 
 [project.optional-dependencies]
 # The macOS wheel in the CPU index also supports MPS.
-cpu = ["torch==2.11.0"]
-cuda = ["torch==2.11.0; sys_platform == 'linux' or sys_platform == 'win32'"]
+cpu = ["torch==2.11.0", "torchvision==0.26.0"]
+cuda = [
+    "torch==2.11.0; sys_platform == 'linux' or sys_platform == 'win32'",
+    "torchvision==0.26.0; sys_platform == 'linux' or sys_platform == 'win32'",
+]
 
 [project.scripts]
 biomed-check = "ml_biomed_project.environment:main"
@@ -24,6 +27,7 @@ biomed-check = "ml_biomed_project.environment:main"
 [dependency-groups]
 dev = ["pytest>=8,<10", "ruff>=0.14,<1"]
 notebooks = ["ipykernel>=6.30,<8", "jupyterlab>=4.4,<5"]
+models = ["totalsegmentator==2.18.0", "universeg"]
 
 [build-system]
 requires = ["uv_build>=0.13.5,<0.14"]
@@ -39,7 +43,12 @@ environments = [
 ]
 
 [tool.uv.sources]
+universeg = { git = "https://github.com/JJGO/UniverSeg", rev = "833a0c34c65e38d675e21bd48ddec6797cc03259" }
 torch = [
+    { index = "pytorch-cpu", extra = "cpu" },
+    { index = "pytorch-cu128", extra = "cuda", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
+]
+torchvision = [
     { index = "pytorch-cpu", extra = "cpu" },
     { index = "pytorch-cu128", extra = "cuda", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
 ]

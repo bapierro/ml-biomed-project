@@ -20,6 +20,7 @@ Thumbs.db
 # Local datasets, checkpoints, predictions, and generated results
 /data/*
 !/data/.gitkeep
+!/data/crosspan_examples.csv
 /models/*
 !/models/.gitkeep
 /results/*
