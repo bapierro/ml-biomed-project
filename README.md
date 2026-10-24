@@ -7,8 +7,6 @@ See [research notes](docs/research-notes.md) for the discussion and references.
 
 This repository provides the environment, device checks, and a synthetic inspection example.
 It contains no datasets, model weights, training pipeline, or medical experiment results.
-The [minimal pilot plan](docs/pilot-plan.md) records the proposed inputs, exact download
-inventory, research assumptions, and the next decision before any real-data pilot.
 
 ## First setup
 
@@ -59,11 +57,11 @@ checks. This setup does not install drivers or a toolkit.
 
 CUDA packages can require several GB of downloads and substantially more installed space.
 On a CPU-only machine, use the `cpu` profile to avoid that download. Exact sizes depend on the
-platform and cache. No CUDA packages are installed on the Mac.
+platform and cache.
 
 Python is pinned to 3.12. uv reuses a compatible installed interpreter or downloads one if absent.
-The initial Mac setup uses its existing Python **3.12.13**. macOS 14+ on Apple silicon and
-Linux with glibc 2.28+ are required by the selected PyTorch wheels. Intel Macs, Windows ARM,
+macOS 14+ on Apple silicon and Linux with glibc 2.28+ are required by the selected PyTorch
+wheels. Intel Macs, Windows ARM,
 and Linux ARM are outside the initial supported platforms.
 
 ## Everyday commands
@@ -130,7 +128,7 @@ that committed notebooks have no outputs or execution counts.
 | `src/ml_biomed_project/` | Shared Python code and the `biomed-check` command |
 | `notebooks/` | Exploration, visual inspection, and figures; committed without outputs |
 | `tests/` | Small tests for shared behavior |
-| `docs/` | Research notes and environment verification |
+| `docs/` | Literature references |
 | `data/`, `models/`, `results/` | Local datasets, checkpoints, and generated artifacts; ignored by Git |
 | `pyproject.toml`, `uv.lock` | Dependency definitions and exact cross-platform resolutions |
 
@@ -138,8 +136,5 @@ Use short branches and pull requests for changes. Teammates need access to the p
 CI runs Ruff, tests, a real CPU check, and notebook-output checks on Linux, Windows, and macOS.
 Hosted CI does not verify CUDA or MPS execution; run `biomed-check` on the intended accelerator.
 
-Before a future dataset/model download, record the source, license, revision/checksum, filenames,
-expected size, and local destination. Keep original data unchanged; keep support and evaluation
-patients separate. Agree on the download scope before retrieving scans or checkpoints.
-
-See [setup verification](docs/setup-status.md) for versions, local storage, and verification limits.
+Keep datasets, weights, and generated results out of Git. Preserve original data and keep
+support and evaluation patients separate.
