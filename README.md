@@ -5,8 +5,10 @@ The final dataset, anatomy, and model comparison await supervisor feedback.
 Pancreas segmentation across MRI sequences is a **proposed direction**, not a settled scope.
 See [research notes](docs/research-notes.md) for the discussion and references.
 
-This repository currently provides the environment and device checks. It contains no datasets,
-model weights, training pipeline, or experimental results.
+This repository provides the environment, device checks, and a synthetic inspection example.
+It contains no datasets, model weights, training pipeline, or medical experiment results.
+The [minimal pilot plan](docs/pilot-plan.md) records the proposed inputs, exact download
+inventory, research assumptions, and the next decision before any real-data pilot.
 
 ## First setup
 
@@ -114,6 +116,9 @@ never put tokens in notebooks, source files, or Git.
 
 Start with [00-environment.ipynb](notebooks/00-environment.ipynb). JupyterLab launched through
 `uv run` can import `ml_biomed_project` without changing `sys.path` or registering a global kernel.
+Then open [Inspect image and mask](notebooks/01-inspect-image-and-mask.ipynb) to check geometry
+and view a synthetic annotation overlay. Its defaults download nothing. It uses the shared
+`dice_score` function, which scores whole binary arrays and returns NaN for two empty masks.
 Put reusable logic in `src/ml_biomed_project/`; use notebooks for exploration and figures.
 Use **Restart Kernel and Clear Outputs of All Cells** before committing notebooks. CI checks
 that committed notebooks have no outputs or execution counts.
