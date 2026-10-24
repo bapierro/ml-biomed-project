@@ -112,35 +112,55 @@ never put tokens in notebooks, source files, or Git.
 
 ## MRI models and examples
 
-Install the optional model libraries with `uv sync --locked --extra cpu --group models --group notebooks`
-(NVIDIA users substitute `cuda`). This adds TotalSegmentator and a pinned UniverSeg revision;
-PyTorch and torchvision builds are matched to the selected profile.
+From the repository root, prepare the data and generate the UniverSeg predictions:
 
-Run `uv run --locked --extra cpu python scripts/download_mri_examples.py` to fetch ten
-CrossPan MRI/annotation pairs (about 38 MiB): two development queries and eight separate
-training patients for support, four per sequence. Existing files are reused. The source
-snapshot is pinned in the script. CrossPan is
-[CC BY-NC 4.0](https://huggingface.co/datasets/linkai-peng/CrossPan).
+```sh
+uv sync --locked --extra cpu --group models --group notebooks
+uv run --locked --extra cpu python scripts/download_mri_examples.py
+uv run --locked --extra cpu --group models python scripts/run_mri_examples.py
+uv run --locked --extra cpu --group notebooks jupyter lab
+```
 
-[TotalSegmentator](https://github.com/wasserth/TotalSegmentator) uses `--task total_mr` and
-`--device mps` on Apple silicon (`--device gpu` on NVIDIA). Its default model downloads
-two MRI weight archives, about 442 MiB, on first use. Set `TOTALSEG_WEIGHTS_PATH` to an
-absolute folder under `models/` to keep its weights here.
+NVIDIA users substitute `cuda` for `cpu`. The runner selects CUDA, MPS, or CPU automatically;
+use `--device cpu`, `--device mps`, or `--device cuda` to choose explicitly.
 
-For UniverSeg, download the [official checkpoint](https://github.com/JJGO/UniverSeg/releases/download/weights/universeg_v1_nf64_ss64_STA.pt)
-(about 4.5 MiB; [model license](https://github.com/JJGO/UniverSeg/blob/833a0c34c65e38d675e21bd48ddec6797cc03259/LICENSE-model))
-into `models/universeg/`. Run `uv run --locked --extra cpu --group models python scripts/run_universeg.py --help`
-for its arguments. Provide matching lists of support images and masks. MRI preprocessing
-clips nonzero-voxel intensity percentiles at 0.5/99.5, normalizes each volume, and resizes
-images/masks together to 128³. The default is exactly 64 distinct processed support slices,
-balanced across the supplied patients; insufficient support raises an error. Query labels
-are never model inputs. Whole-volume probabilities are restored to the original grid before
-thresholding; standardized slices are interpolated views, not additional acquired scans.
+The download step fetches only ten CrossPan MRI/mask pairs (**38.4 MiB**) from a pinned
+snapshot, plus the official UniverSeg checkpoint (**4.5 MiB**, SHA256-verified). Existing
+files are reused. Use `--data-only` to skip the checkpoint when only inspecting images.
+Public downloads need no Hugging Face login. CrossPan is
+[CC BY-NC 4.0](https://huggingface.co/datasets/linkai-peng/CrossPan); see the
+[UniverSeg model license](https://github.com/JJGO/UniverSeg/blob/833a0c34c65e38d675e21bd48ddec6797cc03259/LICENSE-model).
+The download step performs no inference.
 
-The [data visualization and UniverSeg notebook](notebooks/data-visualization-and-universeg.ipynb) evaluates saved predictions
-and shows aligned overlays; it downloads nothing and runs no models. Its expected output
-paths are visible in the notebook. Dice uses SciPy's implementation with input validation
-and explicit handling of two empty masks. Data, weights, scores, and executed outputs stay local.
+The model step processes the two development queries sequentially, using **64 support
+slices from four separate patients per sequence**. It calls the existing inference script
+and saves predictions exactly where the notebook expects them. On the M1 pilot this took
+about 70 seconds per query; CPU runs can take longer. Complete saved outputs are reused;
+incomplete outputs produce a clear error so they can be moved aside before retrying.
+Use `--dry-run` to inspect the commands without running models.
+
+To also generate the optional TotalSegmentator comparator:
+
+```sh
+uv run --locked --extra cpu --group models python scripts/run_mri_examples.py --model totalsegmentator
+```
+
+This uses the full-resolution `total_mr` task and may download **442 MiB** of MRI weights
+on first use, with additional space for extracted weights. Weights stay under `models/`.
+Model libraries are pinned in the existing dependency group; these scripts add no dependencies.
+
+Open [data-visualization-and-universeg.ipynb](notebooks/data-visualization-and-universeg.ipynb).
+With data alone it shows images and annotations and reports missing predictions explicitly.
+With generated predictions it also calculates whole-volume Dice and displays model overlays.
+**The notebook needs no model weights to read saved predictions**, and performs no downloads
+or inference itself. Data, weights, predictions, and executed outputs stay local and ignored by Git.
+
+For a different query or support pool, `scripts/run_universeg.py --help` lists the explicit
+image, mask, checkpoint, and output arguments. MRI preprocessing clips nonzero-voxel
+percentiles at 0.5/99.5, normalizes each volume, and resizes images/masks to 128³. The default
+is exactly 64 distinct processed support slices balanced across patients. Query labels are
+never model inputs; probabilities return to the native grid before thresholding. Standardized
+slices are interpolated views, not additional acquired scans.
 
 ## Working with notebooks and shared code
 
