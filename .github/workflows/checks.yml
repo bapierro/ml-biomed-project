@@ -20,11 +20,11 @@ jobs:
         with:
           version: "0.13.5"
           enable-cache: true
-      - run: uv sync --locked --extra cpu
-      - run: uv run --locked --extra cpu ruff check .
-      - run: uv run --locked --extra cpu ruff format --check .
-      - run: uv run --locked --extra cpu pytest
-      - run: uv run --locked --extra cpu biomed-check --device cpu
+      - run: uv sync --locked --extra cpu --group ssc
+      - run: uv run --locked --extra cpu --group ssc ruff check .
+      - run: uv run --locked --extra cpu --group ssc ruff format --check .
+      - run: uv run --locked --extra cpu --group ssc pytest
+      - run: uv run --locked --extra cpu --group ssc biomed-check --device cpu
       - name: Keep notebook outputs out of commits
         shell: python
         run: |

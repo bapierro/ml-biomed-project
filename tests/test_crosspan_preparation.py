@@ -33,7 +33,7 @@ def source(tmp_path, prepare, monkeypatch):
             payload = (case + key).encode()
             (origin / path).parent.mkdir(parents=True, exist_ok=True)
             (origin / path).write_bytes(payload)
-            row[key] = str(path)
+            row[key] = path.as_posix()
             row[key + "_sha256"] = hashlib.sha256(payload).hexdigest()
         records.append(row)
     with (reference / "cases.csv").open("w", newline="") as stream:
