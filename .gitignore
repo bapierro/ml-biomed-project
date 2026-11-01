@@ -42,3 +42,6 @@ Thumbs.db
 /stored_tokens
 .vscode/
 .idea/
+
+# research folder for local experiments
+/research

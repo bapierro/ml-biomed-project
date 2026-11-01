@@ -26,8 +26,15 @@ biomed-check = "ml_biomed_project.environment:main"
 
 [dependency-groups]
 dev = ["pytest>=8,<10", "ruff>=0.14,<1"]
-notebooks = ["ipykernel>=6.30,<8", "jupyterlab>=4.4,<5"]
+notebooks = [
+    "ipykernel>=6.30,<8",
+    "ipywidgets>=8.1,<9",
+    "jupyterlab>=4.4,<5",
+]
 models = ["totalsegmentator==2.18.0", "universeg"]
+ssc = [
+    "nnunetv2==2.8.1",
+]
 
 [build-system]
 requires = ["uv_build>=0.13.5,<0.14"]

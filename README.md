@@ -1,87 +1,77 @@
 # ML in Biomedicine
 
-Aalto course project on segmentation in medical imaging. This repository contains the
-Python environment, notebooks, and scripts for trying segmentation models. The dataset,
-imaging modality, and models are still being chosen.
+Pancreas segmentation across MRI acquisitions. We train on T1-weighted MRI and
+study transfer to T2-weighted MRI using nnU-Net with self-similarity features.
+**SSC4 is the default:** four patch comparisons at radius 1. SSC8 adds radius 2
+as an ablation. nnU-Net provides preprocessing, the U-Net, training and validation.
 
 ## Setup
 
-Install [uv](https://docs.astral.sh/uv/getting-started/installation/) 0.13.5 or newer.
-You need access to the private GitHub repository. From a terminal:
+Use Python 3.12 and [uv](https://docs.astral.sh/uv/getting-started/installation/).
+From a checkout of this repository:
 
 ```sh
-git clone https://github.com/bapierro/ml-biomed-project.git
-cd ml-biomed-project
-uv sync --locked --extra cpu --group notebooks
+uv sync --locked --extra cpu --group ssc --group notebooks
 uv run --locked --extra cpu biomed-check
-uv run --locked --extra cpu --group notebooks jupyter lab
 ```
 
-uv manages Python 3.12 and the project environment; no manual activation is needed.
-`biomed-check` reports the environment and tests a small calculation on the selected device.
+The `cpu` profile supports Apple MPS. For NVIDIA GPUs on Linux/Windows, replace
+`cpu` with `cuda`. Data, weights and generated results stay local and are not in Git.
 
-Use `cpu` for Apple silicon Macs or CPU-only Linux/Windows. This profile includes MPS
-acceleration on Apple silicon. For NVIDIA GPUs on Linux/Windows, replace `cpu` with `cuda`
-in each command. That profile uses CUDA 12.8 and requires a
-[compatible NVIDIA driver](https://docs.nvidia.com/deploy/cuda-compatibility/).
-CUDA packages take several GB; a separate CUDA toolkit is unnecessary.
+## Train SSC4
 
-Supported platforms: Apple silicon with macOS 14+, and x86-64 Linux (glibc 2.28+) or Windows.
-
-## Notebooks
-
-- [Environment check](notebooks/environment-check.ipynb): verify packages and device access.
-- [Data visualization and UniverSeg](notebooks/data-visualization-and-universeg.ipynb):
-  inspect the current MRI examples and compare saved segmentations. It explains support
-  sets, preprocessing, and Dice scores. It does not download files or run models.
-
-## Current MRI example
-
-The current example uses [CrossPan](https://huggingface.co/datasets/linkai-peng/CrossPan).
-Download its ten selected MRI/mask pairs (**38.4 MiB**):
+Download the selected T1 train/validation files from the
+[pinned CrossPan release](configs/crosspan-t1/source.json), then train:
 
 ```sh
-uv run --locked --extra cpu python scripts/download_mri_examples.py
+uv run --locked --extra cpu --group ssc python scripts/prepare_crosspan.py --download
+uv run --locked --extra cpu --group ssc python scripts/train_ssc.py 801
 ```
 
-The [scan inventory](data/crosspan_examples.csv) lists the selected files and patient
-identity evidence. The dataset revision is pinned in the downloader. Existing downloads
-are reused. With these files alone, the visualization notebook can show images and masks.
+This downloads **369 T1-weighted MRI volumes and their segmentation masks**.
+Each volume has one 3D MRI NIfTI file and one matching 3D mask NIfTI file
+(738 files total); 2D slices are extracted during training, not stored as separate files.
+The helper verifies the files and uses native nnU-Net preprocessing.
+Budget roughly **3.9 GB for images/masks**, plus
+staging copies and preprocessing overhead. Verified local files are reused.
+The official split is **323 training / 46 development-validation volumes**, after
+excluding one known train/validation image alias. No TEST or T2 files are selected.
+Already have the release? Replace `--download` with `/path/to/CrossPan`.
 
-To generate UniverSeg predictions for the notebook:
+Training defaults to **SSC4, 2D, 100 epochs, seed 1729 and fold 0**, selecting an
+available device automatically. Add `--channels 8`
+for the SSC8 ablation, `--dry-run` to inspect a command, or `--resume` to continue
+an interrupted fit. Files go under `data/nnunet/`; `--workspace` changes that location.
+See the [training guide](docs/ssc-training.md) for data layout, outputs and reproduction details.
+
+## Explore the model
 
 ```sh
-uv sync --locked --extra cpu --group models --group notebooks
-uv run --locked --extra cpu python scripts/download_mri_examples.py --with-universeg-weights
-uv run --locked --extra cpu --group models python scripts/run_mri_examples.py --model universeg
+uv run --locked --extra cpu --group ssc --group notebooks jupyter lab notebooks/ssc-domain-generalization.ipynb
 ```
 
-The checkpoint adds **4.5 MiB**. For TotalSegmentator, use `--model totalsegmentator` instead;
-its first run downloads about **442 MiB** of weights, with additional space for extraction.
-The runner selects the available device and reuses saved outputs. Add `--dry-run` to inspect
-the commands without inference.
+The [SSC4 notebook](notebooks/ssc-domain-generalization.ipynb) shows the frozen model's
+training curves, full source/target results and interactive reference-versus-prediction
+views. Its setup downloads only missing demo files (about **314 MB** on first run):
+public weights/results from this repository’s release and six MRI/reference pairs
+directly from pinned CrossPan. No GitHub login is required. Verified local files
+are reused; a complete
+bundle works offline. Optional one-scan inference and provenance are inside the notebook.
 
-These are development examples. Query and support choices are set in
-[scripts/run_mri_examples.py](scripts/run_mri_examples.py), where patient separation is
-checked for UniverSeg. The inventory assigns no experiment roles. CrossPan does not provide
-a complete T1/T2 patient crosswalk, so the examples are not a verified paired cohort.
-Data and model use must follow the [CrossPan license](https://huggingface.co/datasets/linkai-peng/CrossPan)
-and [UniverSeg model license](https://github.com/JJGO/UniverSeg/blob/833a0c34c65e38d675e21bd48ddec6797cc03259/LICENSE-model).
+[Earlier UniverSeg/TotalSegmentator examples](notebooks/data-visualization-and-universeg.ipynb) and the
+[environment check](notebooks/environment-check.ipynb) are also retained.
 
 ## Development
 
-Shared code is in `src/ml_biomed_project/`, runnable examples in `scripts/`, and tests in
-`tests/`. [Initial literature notes](docs/research-notes.md) collect the papers considered.
-
-Add packages with `uv add --no-sync PACKAGE` or `uv add --dev --no-sync PACKAGE`, then repeat
-`uv sync` with your selected profile and groups. Commit `pyproject.toml` and `uv.lock` together.
+Shared code lives in `src/ml_biomed_project/`, entry scripts in `scripts/`, and tests
+in `tests/`. Experiment history belongs in `research/`; the public training path
+does not import it. The training scripts are small adapters to nnU-Net, not another
+training framework.
 
 ```sh
-uv run --locked --extra cpu ruff check .
-uv run --locked --extra cpu ruff format --check .
-uv run --locked --extra cpu pytest
+uv run --locked --extra cpu --group ssc ruff check src scripts tests notebooks
+uv run --locked --extra cpu --group ssc pytest
 ```
 
-Use branches and pull requests for changes. Keep scans, weights, and generated results
-local in `data/`, `models/`, and `results/`; these artifacts are ignored by Git.
-Clear notebook outputs before committing. Update this README when commands or file paths change.
+Keep dependencies in `pyproject.toml` and `uv.lock` together. Clear notebook outputs
+before committing. Use branches and pull requests for changes.

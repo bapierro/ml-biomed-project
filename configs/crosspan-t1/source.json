@@ -1,0 +1,16 @@
+{
+  "dataset": "linkai-peng/CrossPan",
+  "revision": "0da3821e8af2dfa4c22d56e282372614cb426227",
+  "sequence": "T1",
+  "roles": {
+    "train": 323,
+    "val": 46
+  },
+  "excluded_train_case": "MCF_T1_0090",
+  "exclusion_reason": "Exact image alias of VAL MCF_T1_0067; different masks. Preserve VAL, exclude TRAIN alias.",
+  "grouping_limit": "Publisher case IDs; not verified biological patient identities. Within-TRAIN aliases retained.",
+  "plan_scope": "Frozen package-derived 2D pilot plan, geometry/architecture shared by SSC4 and SSC8. Original development fingerprint used TRAIN+VAL. Public dataset/plans/cache identifiers renamed; numerical settings unchanged.",
+  "source_plans_sha256": "5cf8edfab5219bc367a0321cb97197dac605e81115ca2f519b4519e7f89e9850",
+  "data_terms": "https://huggingface.co/datasets/linkai-peng/CrossPan",
+  "source_fingerprint_sha256": "19a9adca94133b91675450ef0d7851d8c79f6608b26aad724cab7d77aed4a108"
+}
