@@ -50,13 +50,17 @@ See the [training guide](docs/ssc-training.md) for data layout, outputs and repr
 uv run --locked --extra cpu --group ssc --group notebooks jupyter lab notebooks/ssc-domain-generalization.ipynb
 ```
 
-The [SSC4 notebook](notebooks/ssc-domain-generalization.ipynb) shows the frozen model's
-training curves, full source/target results and interactive reference-versus-prediction
-views. Its setup downloads only missing demo files (about **314 MB** on first run):
-public weights/results from this repository’s release and six MRI/reference pairs
-directly from pinned CrossPan. No GitHub login is required. Verified local files
-are reused; a complete
-bundle works offline. Optional one-scan inference and provenance are inside the notebook.
+The [SSC4 notebook](notebooks/ssc-domain-generalization.ipynb) compares SSC4-only,
+SSC4+MRI with dropout and SSC4+MRI without dropout over 100 epochs. It includes
+source/target validation scores, raw-enabled and raw-muted policies, paired
+uncertainty and links to all three released checkpoints. These reporting sections
+use checked-in scalar data and need no model or MRI downloads.
+
+The optional SSC4-only prediction browser needs a local validation demo bundle;
+the notebook explains how to export one from the completed local study without
+rerunning inference. A complete bundle works offline. Optional one-scan inference
+and provenance are also included. See [validation results](docs/t2-validation-results.md)
+for cohort details and the earlier SSC8 comparisons.
 
 [Earlier UniverSeg/TotalSegmentator examples](notebooks/data-visualization-and-universeg.ipynb) and the
 [environment check](notebooks/environment-check.ipynb) are also retained.
@@ -75,3 +79,6 @@ uv run --locked --extra cpu --group ssc pytest
 
 Keep dependencies in `pyproject.toml` and `uv.lock` together. Clear notebook outputs
 before committing. Use branches and pull requests for changes.
+
+Current comparisons use T2 validation. T1 training is unchanged; further T2 test
+evaluation is reserved for a final frozen comparison.

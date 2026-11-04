@@ -275,7 +275,10 @@ def plot_study(scores):
         ax.hlines(values.mean(), position - 0.2, position + 0.2, color="black", linewidth=2)
     ax.set(
         xticks=[0, 1],
-        xticklabels=["T1 development VAL", "T2 exploratory test"],
+        xticklabels=[
+            f"{sequence} {'/'.join(scores.loc[scores.sequence == sequence, 'split'].unique())}"
+            for sequence in ["T1", "T2"]
+        ],
         ylabel="Whole-volume Dice",
         ylim=(-0.03, 1.03),
         title="SSC4 · full retained cohorts",
