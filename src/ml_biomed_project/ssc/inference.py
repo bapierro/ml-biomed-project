@@ -1,7 +1,7 @@
 """Native nnU-Net inference without importing custom research trainers.
 
-Only the trusted released SSC4 checkpoint is accepted. Native loading uses
-pickle (weights_only=False), so its SHA256 is verified BEFORE deserialization.
+The public loader accepts only the trusted released SSC4 checkpoint. Native
+loading uses pickle, so its SHA256 is verified BEFORE deserialization.
 """
 
 import hashlib
@@ -44,6 +44,26 @@ class SSCModel:
     checkpoint_sha256: str
     device: torch.device
     file_hashes: dict[str, str] = field(repr=False)
+    descriptor: str = "SSC4: radius1,reflect3x3 SSDmean; no raw channel"
+
+
+def _select_device(device: str) -> torch.device:
+    if device == "auto":
+        device = (
+            "cuda"
+            if torch.cuda.is_available()
+            else "mps"
+            if torch.backends.mps.is_available()
+            else "cpu"
+        )
+    selected = torch.device(device)
+    if selected.type not in {"cpu", "cuda", "mps"}:
+        raise ValueError("Use auto,cpu,cuda or mps")
+    if selected.type == "cuda" and not torch.cuda.is_available():
+        raise RuntimeError("Requested CUDA device is unavailable")
+    if selected.type == "mps" and not torch.backends.mps.is_available():
+        raise RuntimeError("Requested MPS device is unavailable")
+    return selected
 
 
 def load_model(model_dir: str | Path, device: str = "auto") -> SSCModel:
@@ -66,21 +86,7 @@ def load_model(model_dir: str | Path, device: str = "auto") -> SSCModel:
             raise ValueError("Model bundle metadata hashes differ")
     if importlib.metadata.version("nnunetv2") != "2.8.1":
         raise RuntimeError("This model requires nnunetv2==2.8.1")
-    if device == "auto":
-        device = (
-            "cuda"
-            if torch.cuda.is_available()
-            else "mps"
-            if torch.backends.mps.is_available()
-            else "cpu"
-        )
-    selected = torch.device(device)
-    if selected.type not in {"cpu", "cuda", "mps"}:
-        raise ValueError("Use auto,cpu,cuda or mps")
-    if selected.type == "cuda" and not torch.cuda.is_available():
-        raise RuntimeError("Requested CUDA device is unavailable")
-    if selected.type == "mps" and not torch.backends.mps.is_available():
-        raise RuntimeError("Requested MPS device is unavailable")
+    selected = _select_device(device)
     plans = json.loads((folder / names[0]).read_text())
     dataset = json.loads((folder / names[1]).read_text())
     checkpoint = torch.load(folder / names[2], map_location="cpu", weights_only=False)
@@ -104,6 +110,27 @@ def load_model(model_dir: str | Path, device: str = "auto") -> SSCModel:
     axes = tuple(checkpoint.get("inference_allowed_mirroring_axes") or ())
     if axes != (0, 1):
         raise ValueError("Released2D mirror axes must be (0,1)")
+    predictor = _build_native_predictor(plans, dataset, checkpoint, selected, ssc_channels=4)
+    del checkpoint  # Drop unused optimizer/logger state; keep only frozen inference parameters.
+    return SSCModel(predictor, folder, CHECKPOINT_SHA256, selected, hashes)
+
+
+def _build_native_predictor(
+    plans: dict,
+    dataset: dict,
+    checkpoint: dict,
+    device: torch.device,
+    *,
+    ssc_channels: int | None,
+) -> Any:
+    """Construct the shared native inference path after the caller's trust checks.
+
+    None uses the native single-MRI backbone; 4 adds the same fixed SSC4 frontend
+    used in training. No trainer instance, optimizer or custom prediction loop is
+    created. The caller must verify checkpoint provenance before calling this.
+    """
+    if ssc_channels not in (None, 4):
+        raise ValueError("Native inference supports raw MRI or SSC4")
     from nnunetv2.inference.predict_from_raw_data import nnUNetPredictor
     from nnunetv2.training.nnUNetTrainer.nnUNetTrainer import nnUNetTrainer
     from nnunetv2.utilities.plans_handling.plans_handler import PlansManager
@@ -115,11 +142,11 @@ def load_model(model_dir: str | Path, device: str = "auto") -> SSCModel:
     backbone = nnUNetTrainer.build_network_architecture(
         manager,
         configuration,
-        4,
+        1 if ssc_channels is None else ssc_channels,
         manager.get_label_manager(dataset).num_segmentation_heads,
         enable_deep_supervision=False,
     )
-    network = SSCNetwork(backbone, channels=4)
+    network = backbone if ssc_channels is None else SSCNetwork(backbone, channels=ssc_channels)
     weights = checkpoint["network_weights"]
     network.load_state_dict(weights, strict=True)
     network.eval().requires_grad_(False)
@@ -136,7 +163,7 @@ def load_model(model_dir: str | Path, device: str = "auto") -> SSCModel:
         use_gaussian=True,
         use_mirroring=True,
         perform_everything_on_device=False,
-        device=selected,
+        device=device,
         verbose=False,
         verbose_preprocessing=False,
         allow_tqdm=False,
@@ -145,15 +172,20 @@ def load_model(model_dir: str | Path, device: str = "auto") -> SSCModel:
     os.environ["nnUNet_compile"] = "false"
     try:
         predictor.manual_initialization(
-            network, manager, configuration, [weights], dataset, checkpoint["trainer_name"], axes
+            network,
+            manager,
+            configuration,
+            [weights],
+            dataset,
+            checkpoint["trainer_name"],
+            tuple(checkpoint["inference_allowed_mirroring_axes"]),
         )
     finally:
         if original_compile is None:
             os.environ.pop("nnUNet_compile", None)
         else:
             os.environ["nnUNet_compile"] = original_compile
-    del checkpoint  # Drop unused optimizer/logger state; keep only frozen inference parameters.
-    return SSCModel(predictor, folder, CHECKPOINT_SHA256, selected, hashes)
+    return predictor
 
 
 def predict_volume(model: SSCModel, image_path: str | Path, output_path: str | Path) -> Path:
@@ -205,7 +237,7 @@ def predict_volume(model: SSCModel, image_path: str | Path, output_path: str | P
         "device": str(model.device),
         "elapsed_seconds": time.monotonic() - started,
         "configuration": "2d",
-        "descriptor": "SSC4: radius1,reflect3x3 SSDmean; no raw channel",
+        "descriptor": model.descriptor,
         "inference": {
             "tile_step_size": 0.5,
             "gaussian": True,

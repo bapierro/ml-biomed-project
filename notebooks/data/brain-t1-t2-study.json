@@ -1,0 +1,220 @@
+{
+  "schema_version": 1,
+  "study_id": "brain-t1-t2-2026-11-04",
+  "status": "COMPLETE",
+  "status_note": "All four full-volume conditions and all five paired contrasts are audited for the same 97 validation subjects.",
+  "data_audit": {
+    "status": "COMPLETE",
+    "cases_completed": 484,
+    "catalog_sha256": "77f38db2fcf1a39ad4923f482f30c948cc7349fa7823cd307ceb3145adb81412",
+    "cases_sha256": "e550900018d031d454240c73a5d367d39c4816b5be2decfeb3c298d5ca9126af",
+    "shapes": {
+      "[240, 240, 155, 4]": 484
+    },
+    "spacings": {
+      "[1.0, 1.0, 1.0]": 484
+    },
+    "spatial_units": {
+      "mm": 484
+    },
+    "exact_channel_duplicates": {
+      "T1": [],
+      "T2": []
+    },
+    "unlabeled_test_count": 266,
+    "unlabeled_test_arrays_read": 0,
+    "source_bytes": 4767585290,
+    "scope": "Model-blind T1/T2 geometry, finite values, labels and exact duplicates; not biological identity verification",
+    "elapsed_seconds": 132.6288368749665,
+    "T1_crop_omissions": {
+      "affected_training_cases": 1,
+      "affected_validation_cases": 0,
+      "case": "BRATS_444",
+      "cropped_foreground_voxels": 95,
+      "original_foreground_voxels": 52898
+    }
+  },
+  "data_summary": {
+    "counts": {
+      "train": 387,
+      "val": 97
+    },
+    "manifest_sha256": "4852dca82c1f3f9db285a23fc28482c2b885ccb5492e8a6679771f4c4065deab",
+    "foreground_ml": {
+      "train": {
+        "min": 7.285,
+        "median": 94.177,
+        "max": 318.345,
+        "mean": 103.8239715762274
+      },
+      "val": {
+        "min": 10.437,
+        "median": 95.815,
+        "max": 225.258,
+        "mean": 101.20760824742268
+      }
+    },
+    "original_labels_total": {
+      "0": 4271154985,
+      "1": 31456687,
+      "2": 8731567,
+      "3": 9808761
+    },
+    "geometry": "484 pairs exact shape/affine;240x240x155,1mm isotropic"
+  },
+  "manifest_sha256": "4852dca82c1f3f9db285a23fc28482c2b885ccb5492e8a6679771f4c4065deab",
+  "audit_sha256": "cda9c8356d194438188c788e8b6d6bacffb8a3ee7579d6aef3b045363b25843d",
+  "protocol_sha256": "c28f6adaedd0f9b0e6949c4f124d8d35e439b7ddabf53a2b53591b57561e41d5",
+  "design": {
+    "training_subjects": 387,
+    "held_out_subjects": 97,
+    "split_rule": "SHA256(brain-t1-t2:1729: + case_id), first97 heldout; both modalities retain subject role",
+    "source": "T1w",
+    "target": "T2w",
+    "channel_indices": {
+      "T1": 1,
+      "T2": 3
+    },
+    "binary_foreground_labels": [
+      1,
+      2,
+      3
+    ],
+    "foreground_name": "whole tumor including edema",
+    "recipes": [
+      "RAW",
+      "SSC4"
+    ],
+    "epochs_per_recipe": 50,
+    "training_steps_per_epoch": 250,
+    "patch_validation_steps_per_epoch": 50,
+    "training_steps_per_recipe": 12500,
+    "seed": 1729,
+    "checkpoint_policy": "terminal50 only",
+    "plans": "one native 2D brain plan from training T1 only; shared across arms",
+    "conditions": [
+      "RAW_T1",
+      "RAW_T2",
+      "SSC4_T1",
+      "SSC4_T2"
+    ],
+    "contrasts": [
+      {
+        "key": "RAW_T2-RAW_T1",
+        "label": "RAW: T2 \u2212 T1",
+        "primary": true
+      },
+      {
+        "key": "SSC4_T2-SSC4_T1",
+        "label": "SSC4: T2 \u2212 T1",
+        "primary": false
+      },
+      {
+        "key": "SSC4_T2-RAW_T2",
+        "label": "T2: SSC4 \u2212 RAW",
+        "primary": false
+      },
+      {
+        "key": "SSC4_T1-RAW_T1",
+        "label": "T1: SSC4 \u2212 RAW",
+        "primary": false
+      },
+      {
+        "key": "(SSC4_T2-SSC4_T1)-(RAW_T2-RAW_T1)",
+        "label": "Difference in modality changes",
+        "primary": false
+      }
+    ],
+    "bootstrap": {
+      "draws": 10000,
+      "seed": 20261104,
+      "unit": "held-out subject",
+      "paired": true,
+      "shared_draws": true,
+      "confidence_level": 0.95,
+      "multiplicity_adjusted": false
+    },
+    "native_plan": {
+      "patch_yx": [
+        192,
+        160
+      ],
+      "batch_size": 10,
+      "spacing_mm": [
+        1,
+        1,
+        1
+      ],
+      "normalization": "native masked Z-score",
+      "examples_per_recipe": 125000
+    }
+  },
+  "report_files": {
+    "results": "brain-t1-t2-results.json",
+    "training": "brain-t1-t2-training.csv",
+    "case_dice": "brain-t1-t2-case-dice.csv"
+  },
+  "results_contract": {
+    "status": "COMPLETE required before score plots",
+    "n_subjects": 97,
+    "means": "mapping of each condition to its mean full-volume Dice float",
+    "paired_comparisons": "mapping of each predeclared contrast key to difference and ci95=[low,high]"
+  },
+  "training_columns": [
+    "recipe",
+    "completed_epoch",
+    "train_loss",
+    "val_loss",
+    "patch_Dice"
+  ],
+  "references": {
+    "dataset": "https://medicaldecathlon.com/",
+    "paper": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9287542/"
+  },
+  "weights_published": true,
+  "limitations": [
+    "One fit per recipe; subject intervals do not estimate training-seed robustness.",
+    "Held-out T1 supports native monitoring, so this is development validation.",
+    "Different input widths and stochastic streams are not a bitwise-matched optimization trajectory.",
+    "Binary tumor plus edema differs from the original multiclass multimodal challenge.",
+    "Exact duplicate checks do not rule out near-duplicates or establish biological identity.",
+    "Neither a T1-to-T2 decline nor an SSC4 benefit is assumed."
+  ],
+  "partial_history_sha256": "547a09aa8c01401c2d5801b193908d4b63affde13ca8b00b022ae0ae5f88a385",
+  "recovery": {
+    "completed_epochs_restored": 27,
+    "discarded_partial_epoch_updates": 46,
+    "expected_committed_raw_steps": 12500,
+    "expected_physical_raw_steps": 12546
+  },
+  "training_history_sha256": "ee67b94fc053c6132b0cefb2bc0cabd4c9ab1b312f995606a5bca75dc8a3d9c1",
+  "source_means": {
+    "raw": 0.7433847482953341,
+    "ssc4": 0.6432660199866391
+  },
+  "results_sha256": "625c56c5c5970d9a91e9355ce11fc919d460a4050299c064c26b0b6d1b3a684a",
+  "case_dice_sha256": "1c47395653815a0201fd92a7c1080f8042c8c55c7def6a92e707d4c5a077b4f0",
+  "reconciliation_sha256": "1e07071a39ed96089893210ee50668e37c082c7a04e6ce3e191eab1a81c7772f",
+  "released_models": {
+    "RAW": {
+      "tag": "brain-raw-t1-50ep-v1",
+      "representation": "raw",
+      "epochs": 50,
+      "release_url": "https://github.com/bapierro/ml-biomed-project/releases/tag/brain-raw-t1-50ep-v1",
+      "model_zip_url": "https://github.com/bapierro/ml-biomed-project/releases/download/brain-raw-t1-50ep-v1/brain-raw-t1-50ep-v1-model.zip",
+      "checkpoint_sha256": "93b5e54291b468912e9a8cc0f0a7a02345d8c026d3bff15d6e0e736c48997a97",
+      "model_dir": "brain-raw-t1-50ep-v1",
+      "checkpoint_path": "brain-raw-t1-50ep-v1/fold_0/checkpoint_final.pth"
+    },
+    "SSC4": {
+      "tag": "brain-ssc4-t1-50ep-v1",
+      "representation": "ssc4",
+      "epochs": 50,
+      "release_url": "https://github.com/bapierro/ml-biomed-project/releases/tag/brain-ssc4-t1-50ep-v1",
+      "model_zip_url": "https://github.com/bapierro/ml-biomed-project/releases/download/brain-ssc4-t1-50ep-v1/brain-ssc4-t1-50ep-v1-model.zip",
+      "checkpoint_sha256": "c99b94fe065a79b8ef1e55ddee94d11b71caab1b74eea01adedc7afff0d64238",
+      "model_dir": "brain-ssc4-t1-50ep-v1",
+      "checkpoint_path": "brain-ssc4-t1-50ep-v1/fold_0/checkpoint_final.pth"
+    }
+  }
+}
