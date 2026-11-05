@@ -7,3 +7,4 @@
 
 # Keep portable reporting data byte-identical to its recorded checksum.
 notebooks/data/*.csv text eol=lf
+notebooks/data/brain-t1-t2-results.json text eol=lf

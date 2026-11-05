@@ -111,8 +111,11 @@ def build_setup(args) -> dict:
             or len(set(train + val)) != dataset["numTraining"]
         ):
             raise ValueError("Manual split IDs must be unique, disjoint and cover numTraining")
-    channels = args.channels
-    trainer = f"nnUNetTrainerSSC{channels}"
+    representation = getattr(args, "representation", "ssc")
+    if representation not in {"raw", "ssc"} or (representation == "raw" and args.channels != 4):
+        raise ValueError("Use raw or ssc; --channels 8 is only valid with SSC")
+    channels = 1 if representation == "raw" else args.channels
+    trainer = "nnUNetTrainerRAW" if representation == "raw" else f"nnUNetTrainerSSC{channels}"
     folder = results / dataset_name / f"{trainer}__{args.plans}__2d" / f"fold_{args.fold}"
     command = [
         sys.executable,
@@ -165,6 +168,9 @@ def build_setup(args) -> dict:
         "input_hashes": {name: _sha(path) for name, path in paths.items()},
         "source_files": source_files,
     }
+    if representation == "raw":
+        scientific["representation"] = "raw"
+    # SSC retains its existing record schema; trainer names/channels already identify it.
     return {
         "command": command,
         "environment": environment,
@@ -210,6 +216,12 @@ def main(argv=None) -> int:
     parser.add_argument("--plans", default="SSC2D", help="Native plans identifier")
     parser.add_argument(
         "--fold", type=int, default=0, help="Fold index in manual splits_final.json"
+    )
+    parser.add_argument(
+        "--representation",
+        choices=["raw", "ssc"],
+        default="ssc",
+        help="Raw MRI comparator or online SSC features; both use the same native 2D recipe",
     )
     parser.add_argument(
         "--channels",

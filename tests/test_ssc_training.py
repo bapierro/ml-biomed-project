@@ -3,6 +3,7 @@
 import json
 import subprocess
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 import torch
@@ -82,6 +83,34 @@ def test_native_external_discovery_without_network_construction(monkeypatch):
         cls = recursive_find_trainer_class_by_name(f"nnUNetTrainerSSC{channels}")
         assert cls.channels == channels
         assert cls.__name__ == f"nnUNetTrainerSSC{channels}"
+    raw = recursive_find_trainer_class_by_name("nnUNetTrainerRAW")
+    assert raw.__name__ == "nnUNetTrainerRAW"
+
+
+def test_raw_builder_preserves_native_single_channel_input(monkeypatch):
+    from nnunetv2.training.nnUNetTrainer.nnUNetTrainer import nnUNetTrainer
+
+    from ml_biomed_project.ssc.trainer import nnUNetTrainerRAW
+
+    calls = []
+    native = torch.nn.Identity()
+
+    def build(plans, configuration, inputs, outputs, deep_supervision):
+        calls.append((plans, configuration, inputs, outputs, deep_supervision))
+        return native
+
+    monkeypatch.setattr(nnUNetTrainer, "build_network_architecture", staticmethod(build))
+    configuration = SimpleNamespace(patch_size=[16, 16])
+    network = nnUNetTrainerRAW.build_network_architecture(None, configuration, 1, 2, False)
+    image = torch.randn(1, 1, 7, 9, generator=torch.Generator().manual_seed(1729))
+    assert network is native and torch.equal(network(image), image)
+    assert calls == [(None, configuration, 1, 2, False)]
+    with pytest.raises(ValueError, match="one MRI input"):
+        nnUNetTrainerRAW.build_network_architecture(None, configuration, 4, 2)
+    with pytest.raises(ValueError, match="2D plans"):
+        nnUNetTrainerRAW.build_network_architecture(
+            None, SimpleNamespace(patch_size=[16, 16, 16]), 1, 2
+        )
 
 
 def test_dry_run_has_no_output_or_subprocess(tmp_path, monkeypatch, capsys):
@@ -99,6 +128,25 @@ def test_dry_run_has_no_output_or_subprocess(tmp_path, monkeypatch, capsys):
     assert "nnUNetTrainerSSC4" in setup["command"]
     assert setup["command"][1:3] == ["-c", training.NATIVE_ENTRY]
     assert sorted(str(p.relative_to(tmp_path)) for p in tmp_path.rglob("*")) == before
+
+
+def test_raw_and_ssc50_share_inputs_and_have_distinct_run_identity(tmp_path, capsys):
+    argv, _ = _workspace(tmp_path)
+    ssc = _dry_setup([*argv, "--epochs", "50"], capsys)
+    explicit_ssc = _dry_setup([*argv, "--epochs", "50", "--representation", "ssc"], capsys)
+    raw = _dry_setup([*argv, "--epochs", "50", "--representation", "raw"], capsys)
+    assert explicit_ssc == ssc
+    assert "representation" not in ssc["scientific"]  # Preserve the SSC record schema.
+    assert raw["scientific"]["representation"] == "raw"
+    assert raw["scientific"]["channels"] == 1
+    assert ssc["scientific"]["channels"] == 4
+    assert raw["scientific"]["input_hashes"] == ssc["scientific"]["input_hashes"]
+    assert raw["environment"] == ssc["environment"]
+    assert raw["environment"]["SSC_EPOCHS"] == "50"
+    assert raw["fold_dir"] != ssc["fold_dir"]
+    assert "nnUNetTrainerRAW" in raw["command"]
+    with pytest.raises(ValueError, match="only valid with SSC"):
+        training.main([*argv, "--representation", "raw", "--channels", "8", "--dry-run"])
 
 
 @pytest.mark.parametrize("problem", ["missing", "fingerprint", "overlap", "fold"])
