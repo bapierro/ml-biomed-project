@@ -1,6 +1,6 @@
 """Copy a small portable demo from the completed local study. No downloads/inference.
 
-Readers receiving data/ssc-demo can skip this archive-export step entirely.
+Readers receiving data/ssc-demo-validation can skip this archive-export step entirely.
 Large generated files stay ignored by Git; the original study is never modified.
 """
 
@@ -33,27 +33,27 @@ def prepare(study, output):
     if sha(checkpoint) != CHECKPOINT_SHA:
         raise ValueError("Expected frozen terminal100 SSC4 checkpoint.")
     original = study.parent / "nnunet-ssc-2026-10-29"
-    t2 = study / "t2-evaluation-2026-11-01"
-    evaluation = json.loads((t2 / "frozen-spec.json").read_text())
+    t2 = study.parent / "t2-validation-2026-11-02"
+    evaluation = json.loads((t2 / "spec.json").read_text())
     if json.loads((t2 / "results/comparison.json").read_text()).get("status") != "COMPLETE":
         raise ValueError("Completed frozen SSC4 target evaluation is required.")
     dev_path = original / "metadata/official-development-manifest.json"
-    t2_path = Path(evaluation["files"]["cohort"]["path"])
+    t2_path = Path(evaluation["cohort"]["path"])
     dev = json.loads(dev_path.read_text())
     target = json.loads(t2_path.read_text())
     dev_rows = {r["case_id"]: r for r in dev["rows"] if r["role"] == "val"}
     t2_rows = {r["case_id"]: r for r in target["rows"]}
     source_summary = model / "fold_0/validation/summary.json"
-    target_predictions = Path(evaluation["paths"]["predictions"])
+    target_predictions = Path(evaluation["paths"]["predictions"]["SSC4"])
     target_summary = target_predictions / "summary.json"
     summary = json.loads(source_summary.read_text())
     chosen = [
         ("T1", "MCF_T1_0134", "Fixed source illustration; retained prior demo case"),
         ("T1", "EMC014_T1", "Fixed source illustration; retained prior demo case"),
-        ("T2", "NU_T2_126", "Fixed target illustration; retained prior demo case"),
-        ("T2", "EMC_T2_01_044", "Fixed target illustration; retained prior demo case"),
-        ("T2", "EMC_T2_01_012", "Fixed target illustration; retained prior demo case"),
-        ("T2", "CAD_T2_124", "Fixed target illustration; retained prior demo case"),
+        *[
+            ("T2", case, "First case per center, fixed before validation inference")
+            for case in json.loads((t2 / "illustrations.json").read_text())
+        ],
     ]
     scores = []
     for r in summary["metric_per_case"]:
@@ -77,7 +77,7 @@ def prepare(study, output):
             {
                 "case_id": case_id,
                 "sequence": "T2",
-                "split": "exploratory test",
+                "split": "development VAL",
                 "patient_group": t2_rows[case_id]["patient_group"],
                 "dice": count["Dice"],
                 **{k: count[k] for k in ["TP", "FP", "FN", "n_pred", "n_ref"]},
@@ -85,11 +85,11 @@ def prepare(study, output):
         )
     if (
         len(dev_rows) != 46
-        or len(t2_rows) != 92
-        or len(scores) != 138
-        or len({(r["sequence"], r["case_id"]) for r in scores}) != 138
+        or len(t2_rows) != 56
+        or len(scores) != 46 + len(t2_rows)
+        or len({(r["sequence"], r["case_id"]) for r in scores}) != 46 + len(t2_rows)
     ):
-        raise ValueError("Complete46source/92target score coverage required")
+        raise ValueError("Complete46source/56target score coverage required")
     output.mkdir(parents=True)
     copied = {}
 
@@ -130,7 +130,7 @@ def prepare(study, output):
             "case_id": case_id,
             "sequence": sequence,
             "selection": selection,
-            "split": "development VAL" if sequence == "T1" else "exploratory test",
+            "split": "development VAL",
             "patient_group": row["patient_group"],
             "image": copy(row["image"]["local_path"], prefix / "image.nii.gz"),
             "reference": copy(row["mask"]["local_path"], prefix / "reference.nii.gz"),
@@ -180,9 +180,9 @@ def prepare(study, output):
             "crosspan_repo": "linkai-peng/CrossPan",
             "crosspan_revision": "0da3821e8af2dfa4c22d56e282372614cb426227",
         },
-        "scope": "One SSC4 initialization, source development VAL, already-exposed exploratory T2. "
+        "scope": "One SSC4 initialization, source development VAL, T2 development VAL. "
         "Operational filename groups are not verified biological identities. Demo cases selected "
-        "for illustration; scores.csv contains ALL46 source and92 target scans. No matched RAW "
+        "for illustration; scores.csv contains ALL46 source and56 target scans. No matched RAW "
         "nnU-Net checkpoint.",
         "data_source": "https://huggingface.co/datasets/linkai-peng/CrossPan",
         "terms": "Consult the CrossPan dataset card and original terms before redistribution/use; "
@@ -190,7 +190,7 @@ def prepare(study, output):
     }
     (output / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
     size = sum(f.stat().st_size for f in output.rglob("*") if f.is_file())
-    print(f"Prepared {len(cases)} cases, full138-scan scores, and native model at {output}")
+    print(f"Prepared {len(cases)} cases, full102-scan scores, and native model at {output}")
     print(f"{size / 1e6:.1f} MB local copy; zero downloads. Folder is relocatable.")
 
 
@@ -199,7 +199,7 @@ def main():
     parser.add_argument(
         "--study", type=Path, default=ROOT / "research/acquisition-shift/nnunet-ssc4-2026-10-31"
     )
-    parser.add_argument("--output", type=Path, default=ROOT / "data/ssc-demo")
+    parser.add_argument("--output", type=Path, default=ROOT / "data/ssc-demo-validation")
     args = parser.parse_args()
     prepare(args.study, args.output)
 

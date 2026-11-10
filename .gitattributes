@@ -4,3 +4,6 @@
 *.yml text eol=lf
 *.md text eol=lf
 *.ipynb text eol=lf
+
+# Keep portable reporting data byte-identical to its recorded checksum.
+notebooks/data/*.csv text eol=lf

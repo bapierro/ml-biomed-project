@@ -1,0 +1,928 @@
+{
+  "schema_version": 1,
+  "recorded_date": "2026-11-04",
+  "scope": "Terminal100 whole-volume exposed development validation; three fitted recipes/five separate inference policies, scalar reporting only. Training curves are native T1 sampled-patch metrics, not full-volume or T2 Dice.",
+  "limitations": [
+    "One fit per recipe; bootstrap intervals condition on fixed models and reused validation, not training-seed uncertainty or untouched confirmation.",
+    "T2 operational filename groups are not verified biological identities. No T2 data entered fitting.",
+    "No-drop raw-muted input was absent during training. Muting failure does not prove SSC unused; fusion, normalization/activation and calibration remain alternatives.",
+    "DROP paused after38 and NODROP after14/59 completed epochs; native asynchronous/global streams restarted, so trajectories are not fully matched. No SSC4 pause is recorded in the demo metadata.",
+    "Native raw-enabled T1 validation uses the training cache; fresh muted preprocessing is not asserted bitwise identical. Approved Direction-only source geometry exceptions retain original index alignment.",
+    "Raw-enabled and raw-muted are separate policies for each model; no raw-enabledT1/raw-mutedT2 hybrid policy.",
+    "Training histories reuse completed epochs only. The canonical no-drop history excludes two incomplete epoch blocks (14 and59) and the zero-work failed discovery attempt; no unfinished epoch is counted."
+  ],
+  "provenance": {
+    "research/acquisition-shift/nnunet-ssc4-raw-no-drop-2026-11-03/terminal100/results/comparison.json": {
+      "sha256": "fc6f097b74af65e2b5693c564b6f12ae99ce878c5829924044a55d4c99c36d97"
+    },
+    "research/acquisition-shift/nnunet-ssc4-raw-no-drop-2026-11-03/terminal100/artifacts/FINAL_AUDIT.json": {
+      "sha256": "3a201058bb565647e90abfddbcc215c43fecef24a97e46e8c3ec65da5fc648ff"
+    },
+    "data/ssc-demo-validation/training.csv": {
+      "sha256": "798d69e0736910b576083704289f6656e01e7c93f9021c4627c63f851d8d1d7b"
+    },
+    "src/ml_biomed_project/ssc/demo.json": {
+      "sha256": "ac5c19eb12b6fbfaff0466c844458a19e8862a2c7a9ff3132e13af5d18f3a50a"
+    },
+    "data/ssc-demo-validation/manifest.json": {
+      "sha256": "3688f76a9e772b689fbdf9ec43b2ac0a998ef55eb9fdb05b82b82b8990df3b51"
+    },
+    "research/acquisition-shift/nnunet-ssc4-raw-no-drop-2026-11-03/presentation/final-snapshot3-v1/native-history.csv": {
+      "sha256": "82a0409a20baa358d06d76198fa23d1789de448d303fa67f92026265ea3c10ff"
+    },
+    "research/acquisition-shift/nnunet-ssc4-raw-no-drop-2026-11-03/presentation/final-snapshot3-v1/manifest.json": {
+      "sha256": "45bee099ad564dabf2320f724f15f3a2fe0be8ba0d2a6e81e06c7b01bc56c2fa"
+    },
+    "research/acquisition-shift/ssc4-raw-release-2026-11-04/DELIVERY.json": {
+      "sha256": "c6541211eabd5ee85b006f640eb60140bf6336c6c9aca067a9da25b153c61689"
+    },
+    "research/acquisition-shift/ssc4-raw-release-2026-11-04/bundles/dropout/model/model-metadata.json": {
+      "sha256": "fce77f6c2e1e6ba9d8495cbc92f76575a68c658599bad0ca2f9c779069ef2837"
+    },
+    "research/acquisition-shift/ssc4-raw-release-2026-11-04/bundles/no-dropout/model/model-metadata.json": {
+      "sha256": "571f4e8e0e79eab26407373ea062f5f156ec9f0ebc70444f334ce3bfbea68a05"
+    },
+    "notebooks/data/ssc4-terminal100-training.csv": {
+      "sha256": "fb9c00330973546ab9323d863b46c3867e4dca03cc5a489f18cf590e9b28c2dd",
+      "rows": 300
+    }
+  },
+  "cohorts": {
+    "T1": {
+      "cases": 46,
+      "paired_units": 46,
+      "unit": "case",
+      "split": "development validation"
+    },
+    "T2": {
+      "scans": 56,
+      "groups": 53,
+      "paired_units": 53,
+      "unit": "operational group after scan averaging",
+      "split": "development validation"
+    }
+  },
+  "models": [
+    {
+      "key": "SSC4",
+      "label": "SSC4-only",
+      "input_features": 4,
+      "raw_dropout_probability": null,
+      "checkpoint_sha256": "3ff24ee94d4f363348892d80f268fdea6904630a9639606a3b7ccd673ea4b922",
+      "release_url": "https://github.com/bapierro/ml-biomed-project/releases/tag/ssc4-demo-v1",
+      "weights_url": "https://github.com/bapierro/ml-biomed-project/releases/download/ssc4-demo-v1/ssc4-final.pth",
+      "metadata_url": "https://github.com/bapierro/ml-biomed-project/releases/download/ssc4-demo-v1/ssc4-demo-v1.zip",
+      "paused_after_epochs": []
+    },
+    {
+      "key": "DROP",
+      "label": "SSC4 + MRI, whole-raw dropout p=0.5",
+      "input_features": 5,
+      "raw_dropout_probability": 0.5,
+      "checkpoint_sha256": "1a102b65a22cd1a322cdc50fec0b4338b66e279a5fa2b7d7c927ed6dd248c589",
+      "release_url": "https://github.com/bapierro/ml-biomed-project/releases/tag/ssc4-raw-dropout-v1",
+      "weights_url": "https://github.com/bapierro/ml-biomed-project/releases/download/ssc4-raw-dropout-v1/ssc4-raw-dropout-final.pth",
+      "metadata_url": "https://github.com/bapierro/ml-biomed-project/releases/download/ssc4-raw-dropout-v1/ssc4-raw-dropout-v1.zip",
+      "paused_after_epochs": [
+        38
+      ]
+    },
+    {
+      "key": "NODROP",
+      "label": "SSC4 + MRI, no dropout",
+      "input_features": 5,
+      "raw_dropout_probability": 0.0,
+      "checkpoint_sha256": "0a53be4b3bf86e812a3f036a4622a8ee6420cadfaafab9c3e16df0f787177bcc",
+      "release_url": "https://github.com/bapierro/ml-biomed-project/releases/tag/ssc4-raw-no-dropout-v1",
+      "weights_url": "https://github.com/bapierro/ml-biomed-project/releases/download/ssc4-raw-no-dropout-v1/ssc4-raw-no-dropout-final.pth",
+      "metadata_url": "https://github.com/bapierro/ml-biomed-project/releases/download/ssc4-raw-no-dropout-v1/ssc4-raw-no-dropout-v1.zip",
+      "paused_after_epochs": [
+        14,
+        59
+      ]
+    }
+  ],
+  "means": {
+    "SSC4": {
+      "T1": {
+        "Dice": 0.685555538743551,
+        "scan_Dice": 0.685555538743551,
+        "scans": 46,
+        "paired_units": 46,
+        "centers": {
+          "EMC": {
+            "scans": 5,
+            "groups": 5,
+            "scan_Dice": 0.653137371296911,
+            "group_Dice": 0.653137371296911,
+            "empty_predictions": 0,
+            "Dice_below_01": 0
+          },
+          "IU": {
+            "scans": 5,
+            "groups": 5,
+            "scan_Dice": 0.627339718426694,
+            "group_Dice": 0.627339718426694,
+            "empty_predictions": 0,
+            "Dice_below_01": 0
+          },
+          "MCF": {
+            "scans": 15,
+            "groups": 15,
+            "scan_Dice": 0.7384227856127442,
+            "group_Dice": 0.7384227856127442,
+            "empty_predictions": 0,
+            "Dice_below_01": 0
+          },
+          "NU": {
+            "scans": 5,
+            "groups": 5,
+            "scan_Dice": 0.6475238084607704,
+            "group_Dice": 0.6475238084607704,
+            "empty_predictions": 0,
+            "Dice_below_01": 0
+          },
+          "NYU": {
+            "scans": 16,
+            "groups": 16,
+            "scan_Dice": 0.676200531693144,
+            "group_Dice": 0.676200531693144,
+            "empty_predictions": 0,
+            "Dice_below_01": 0
+          }
+        },
+        "empty_predictions": 0,
+        "Dice_below_01": 0
+      },
+      "T2": {
+        "Dice": 0.4976786443348025,
+        "scan_Dice": 0.4898666083735275,
+        "scans": 56,
+        "paired_units": 53,
+        "centers": {
+          "AHN": {
+            "scans": 3,
+            "groups": 3,
+            "scan_Dice": 0.30986390703767425,
+            "group_Dice": 0.30986390703767425,
+            "empty_predictions": 0,
+            "Dice_below_01": 2
+          },
+          "CAD": {
+            "scans": 12,
+            "groups": 12,
+            "scan_Dice": 0.4728312264066677,
+            "group_Dice": 0.4728312264066677,
+            "empty_predictions": 0,
+            "Dice_below_01": 2
+          },
+          "EMC": {
+            "scans": 7,
+            "groups": 4,
+            "scan_Dice": 0.4096411150866272,
+            "group_Dice": 0.4529814716083469,
+            "empty_predictions": 0,
+            "Dice_below_01": 1
+          },
+          "IU": {
+            "scans": 7,
+            "groups": 7,
+            "scan_Dice": 0.5552742309512072,
+            "group_Dice": 0.5552742309512072,
+            "empty_predictions": 0,
+            "Dice_below_01": 0
+          },
+          "MCA": {
+            "scans": 2,
+            "groups": 2,
+            "scan_Dice": 0.03619183422395435,
+            "group_Dice": 0.03619183422395435,
+            "empty_predictions": 0,
+            "Dice_below_01": 2
+          },
+          "NU": {
+            "scans": 17,
+            "groups": 17,
+            "scan_Dice": 0.5706335631370038,
+            "group_Dice": 0.5706335631370038,
+            "empty_predictions": 0,
+            "Dice_below_01": 0
+          },
+          "NYU": {
+            "scans": 8,
+            "groups": 8,
+            "scan_Dice": 0.5376752458603362,
+            "group_Dice": 0.5376752458603362,
+            "empty_predictions": 0,
+            "Dice_below_01": 0
+          }
+        },
+        "empty_predictions": 0,
+        "Dice_below_01": 7
+      }
+    },
+    "DROP_RAW1": {
+      "T1": {
+        "Dice": 0.7451058951898721,
+        "scan_Dice": 0.7451058951898721,
+        "scans": 46,
+        "paired_units": 46,
+        "centers": {
+          "EMC": {
+            "scans": 5,
+            "groups": 5,
+            "scan_Dice": 0.7229525383420223,
+            "group_Dice": 0.7229525383420223,
+            "empty_predictions": 0,
+            "Dice_below_01": 0
+          },
+          "IU": {
+            "scans": 5,
+            "groups": 5,
+            "scan_Dice": 0.6918246727912667,
+            "group_Dice": 0.6918246727912667,
+            "empty_predictions": 0,
+            "Dice_below_01": 0
+          },
+          "MCF": {
+            "scans": 15,
+            "groups": 15,
+            "scan_Dice": 0.7677978598174858,
+            "group_Dice": 0.7677978598174858,
+            "empty_predictions": 0,
+            "Dice_below_01": 0
+          },
+          "NU": {
+            "scans": 5,
+            "groups": 5,
+            "scan_Dice": 0.80341915377671,
+            "group_Dice": 0.80341915377671,
+            "empty_predictions": 0,
+            "Dice_below_01": 0
+          },
+          "NYU": {
+            "scans": 16,
+            "groups": 16,
+            "scan_Dice": 0.7291825910576146,
+            "group_Dice": 0.7291825910576146,
+            "empty_predictions": 0,
+            "Dice_below_01": 0
+          }
+        },
+        "empty_predictions": 0,
+        "Dice_below_01": 0
+      },
+      "T2": {
+        "Dice": 0.05816488074446421,
+        "scan_Dice": 0.05581421111274547,
+        "scans": 56,
+        "paired_units": 53,
+        "centers": {
+          "AHN": {
+            "scans": 3,
+            "groups": 3,
+            "scan_Dice": 0.15328958438499074,
+            "group_Dice": 0.15328958438499074,
+            "empty_predictions": 2,
+            "Dice_below_01": 2
+          },
+          "CAD": {
+            "scans": 12,
+            "groups": 12,
+            "scan_Dice": 0.042998942847408135,
+            "group_Dice": 0.042998942847408135,
+            "empty_predictions": 3,
+            "Dice_below_01": 10
+          },
+          "EMC": {
+            "scans": 7,
+            "groups": 4,
+            "scan_Dice": 0.10344514151856035,
+            "group_Dice": 0.1703147119431949,
+            "empty_predictions": 3,
+            "Dice_below_01": 5
+          },
+          "IU": {
+            "scans": 7,
+            "groups": 7,
+            "scan_Dice": 0.01386339629044536,
+            "group_Dice": 0.01386339629044536,
+            "empty_predictions": 4,
+            "Dice_below_01": 7
+          },
+          "MCA": {
+            "scans": 2,
+            "groups": 2,
+            "scan_Dice": 0.0,
+            "group_Dice": 0.0,
+            "empty_predictions": 2,
+            "Dice_below_01": 2
+          },
+          "NU": {
+            "scans": 17,
+            "groups": 17,
+            "scan_Dice": 0.03701889766095342,
+            "group_Dice": 0.03701889766095342,
+            "empty_predictions": 4,
+            "Dice_below_01": 15
+          },
+          "NYU": {
+            "scans": 8,
+            "groups": 8,
+            "scan_Dice": 0.08740734126132846,
+            "group_Dice": 0.08740734126132846,
+            "empty_predictions": 0,
+            "Dice_below_01": 4
+          }
+        },
+        "empty_predictions": 18,
+        "Dice_below_01": 45
+      }
+    },
+    "DROP_RAW0": {
+      "T1": {
+        "Dice": 0.6747082088445968,
+        "scan_Dice": 0.6747082088445968,
+        "scans": 46,
+        "paired_units": 46,
+        "centers": {
+          "EMC": {
+            "scans": 5,
+            "groups": 5,
+            "scan_Dice": 0.6519529022133446,
+            "group_Dice": 0.6519529022133446,
+            "empty_predictions": 0,
+            "Dice_below_01": 0
+          },
+          "IU": {
+            "scans": 5,
+            "groups": 5,
+            "scan_Dice": 0.6448080535008398,
+            "group_Dice": 0.6448080535008398,
+            "empty_predictions": 0,
+            "Dice_below_01": 0
+          },
+          "MCF": {
+            "scans": 15,
+            "groups": 15,
+            "scan_Dice": 0.7252842283490165,
+            "group_Dice": 0.7252842283490165,
+            "empty_predictions": 0,
+            "Dice_below_01": 0
+          },
+          "NU": {
+            "scans": 5,
+            "groups": 5,
+            "scan_Dice": 0.6117412479873078,
+            "group_Dice": 0.6117412479873078,
+            "empty_predictions": 0,
+            "Dice_below_01": 0
+          },
+          "NYU": {
+            "scans": 16,
+            "groups": 16,
+            "scan_Dice": 0.6634251976942964,
+            "group_Dice": 0.6634251976942964,
+            "empty_predictions": 0,
+            "Dice_below_01": 0
+          }
+        },
+        "empty_predictions": 0,
+        "Dice_below_01": 0
+      },
+      "T2": {
+        "Dice": 0.48803249177296465,
+        "scan_Dice": 0.47956872847815835,
+        "scans": 56,
+        "paired_units": 53,
+        "centers": {
+          "AHN": {
+            "scans": 3,
+            "groups": 3,
+            "scan_Dice": 0.2808594619987924,
+            "group_Dice": 0.2808594619987924,
+            "empty_predictions": 1,
+            "Dice_below_01": 2
+          },
+          "CAD": {
+            "scans": 12,
+            "groups": 12,
+            "scan_Dice": 0.46642091566560734,
+            "group_Dice": 0.46642091566560734,
+            "empty_predictions": 0,
+            "Dice_below_01": 1
+          },
+          "EMC": {
+            "scans": 7,
+            "groups": 4,
+            "scan_Dice": 0.40060376268177106,
+            "group_Dice": 0.4535249019906633,
+            "empty_predictions": 0,
+            "Dice_below_01": 1
+          },
+          "IU": {
+            "scans": 7,
+            "groups": 7,
+            "scan_Dice": 0.5287568517676718,
+            "group_Dice": 0.5287568517676718,
+            "empty_predictions": 0,
+            "Dice_below_01": 0
+          },
+          "MCA": {
+            "scans": 2,
+            "groups": 2,
+            "scan_Dice": 0.0697112028395101,
+            "group_Dice": 0.0697112028395101,
+            "empty_predictions": 0,
+            "Dice_below_01": 1
+          },
+          "NU": {
+            "scans": 17,
+            "groups": 17,
+            "scan_Dice": 0.5647801272550319,
+            "group_Dice": 0.5647801272550319,
+            "empty_predictions": 0,
+            "Dice_below_01": 0
+          },
+          "NYU": {
+            "scans": 8,
+            "groups": 8,
+            "scan_Dice": 0.5212513188290677,
+            "group_Dice": 0.5212513188290677,
+            "empty_predictions": 0,
+            "Dice_below_01": 0
+          }
+        },
+        "empty_predictions": 1,
+        "Dice_below_01": 5
+      }
+    },
+    "NODROP_RAW1": {
+      "T1": {
+        "Dice": 0.7645453514200986,
+        "scan_Dice": 0.7645453514200986,
+        "scans": 46,
+        "paired_units": 46,
+        "centers": {
+          "EMC": {
+            "scans": 5,
+            "groups": 5,
+            "scan_Dice": 0.7479311014459356,
+            "group_Dice": 0.7479311014459356,
+            "empty_predictions": 0,
+            "Dice_below_01": 0
+          },
+          "IU": {
+            "scans": 5,
+            "groups": 5,
+            "scan_Dice": 0.6851496819263543,
+            "group_Dice": 0.6851496819263543,
+            "empty_predictions": 0,
+            "Dice_below_01": 0
+          },
+          "MCF": {
+            "scans": 15,
+            "groups": 15,
+            "scan_Dice": 0.7923621617478235,
+            "group_Dice": 0.7923621617478235,
+            "empty_predictions": 0,
+            "Dice_below_01": 0
+          },
+          "NU": {
+            "scans": 5,
+            "groups": 5,
+            "scan_Dice": 0.8076733939845037,
+            "group_Dice": 0.8076733939845037,
+            "empty_predictions": 0,
+            "Dice_below_01": 0
+          },
+          "NYU": {
+            "scans": 16,
+            "groups": 16,
+            "scan_Dice": 0.7549926782702014,
+            "group_Dice": 0.7549926782702014,
+            "empty_predictions": 0,
+            "Dice_below_01": 0
+          }
+        },
+        "empty_predictions": 0,
+        "Dice_below_01": 0
+      },
+      "T2": {
+        "Dice": 0.005784456618109464,
+        "scan_Dice": 0.005474575013567885,
+        "scans": 56,
+        "paired_units": 53,
+        "centers": {
+          "AHN": {
+            "scans": 3,
+            "groups": 3,
+            "scan_Dice": 0.0,
+            "group_Dice": 0.0,
+            "empty_predictions": 1,
+            "Dice_below_01": 3
+          },
+          "CAD": {
+            "scans": 12,
+            "groups": 12,
+            "scan_Dice": 0.008364088588068079,
+            "group_Dice": 0.008364088588068079,
+            "empty_predictions": 0,
+            "Dice_below_01": 12
+          },
+          "EMC": {
+            "scans": 7,
+            "groups": 4,
+            "scan_Dice": 0.009636472727401282,
+            "group_Dice": 0.016863827272952242,
+            "empty_predictions": 0,
+            "Dice_below_01": 7
+          },
+          "IU": {
+            "scans": 7,
+            "groups": 7,
+            "scan_Dice": 0.0,
+            "group_Dice": 0.0,
+            "empty_predictions": 0,
+            "Dice_below_01": 7
+          },
+          "MCA": {
+            "scans": 2,
+            "groups": 2,
+            "scan_Dice": 0.0,
+            "group_Dice": 0.0,
+            "empty_predictions": 1,
+            "Dice_below_01": 2
+          },
+          "NU": {
+            "scans": 17,
+            "groups": 17,
+            "scan_Dice": 0.0014739121461726078,
+            "group_Dice": 0.0014739121461726078,
+            "empty_predictions": 2,
+            "Dice_below_01": 17
+          },
+          "NYU": {
+            "scans": 8,
+            "groups": 8,
+            "scan_Dice": 0.014211915265780164,
+            "group_Dice": 0.014211915265780164,
+            "empty_predictions": 1,
+            "Dice_below_01": 8
+          }
+        },
+        "empty_predictions": 5,
+        "Dice_below_01": 56
+      }
+    },
+    "NODROP_RAW0": {
+      "T1": {
+        "Dice": 0.016356221154778992,
+        "scan_Dice": 0.016356221154778992,
+        "scans": 46,
+        "paired_units": 46,
+        "centers": {
+          "EMC": {
+            "scans": 5,
+            "groups": 5,
+            "scan_Dice": 0.0006285712858033505,
+            "group_Dice": 0.0006285712858033505,
+            "empty_predictions": 3,
+            "Dice_below_01": 5
+          },
+          "IU": {
+            "scans": 5,
+            "groups": 5,
+            "scan_Dice": 0.05504384136060654,
+            "group_Dice": 0.05504384136060654,
+            "empty_predictions": 3,
+            "Dice_below_01": 4
+          },
+          "MCF": {
+            "scans": 15,
+            "groups": 15,
+            "scan_Dice": 0.022907054707990968,
+            "group_Dice": 0.022907054707990968,
+            "empty_predictions": 7,
+            "Dice_below_01": 15
+          },
+          "NU": {
+            "scans": 5,
+            "groups": 5,
+            "scan_Dice": 0.01745979107942298,
+            "group_Dice": 0.01745979107942298,
+            "empty_predictions": 4,
+            "Dice_below_01": 5
+          },
+          "NYU": {
+            "scans": 16,
+            "groups": 16,
+            "scan_Dice": 0.0026949583669252986,
+            "group_Dice": 0.0026949583669252986,
+            "empty_predictions": 12,
+            "Dice_below_01": 16
+          }
+        },
+        "empty_predictions": 29,
+        "Dice_below_01": 45
+      },
+      "T2": {
+        "Dice": 0.01016595370242227,
+        "scan_Dice": 0.009621349039792507,
+        "scans": 56,
+        "paired_units": 53,
+        "centers": {
+          "AHN": {
+            "scans": 3,
+            "groups": 3,
+            "scan_Dice": 0.0,
+            "group_Dice": 0.0,
+            "empty_predictions": 3,
+            "Dice_below_01": 3
+          },
+          "CAD": {
+            "scans": 12,
+            "groups": 12,
+            "scan_Dice": 0.0002791580592931718,
+            "group_Dice": 0.0002791580592931718,
+            "empty_predictions": 10,
+            "Dice_below_01": 12
+          },
+          "EMC": {
+            "scans": 7,
+            "groups": 4,
+            "scan_Dice": 0.0,
+            "group_Dice": 0.0,
+            "empty_predictions": 6,
+            "Dice_below_01": 7
+          },
+          "IU": {
+            "scans": 7,
+            "groups": 7,
+            "scan_Dice": 0.002818769689935334,
+            "group_Dice": 0.002818769689935334,
+            "empty_predictions": 6,
+            "Dice_below_01": 7
+          },
+          "MCA": {
+            "scans": 2,
+            "groups": 2,
+            "scan_Dice": 0.0,
+            "group_Dice": 0.0,
+            "empty_predictions": 2,
+            "Dice_below_01": 2
+          },
+          "NU": {
+            "scans": 17,
+            "groups": 17,
+            "scan_Dice": 0.013978707416748509,
+            "group_Dice": 0.013978707416748509,
+            "empty_predictions": 12,
+            "Dice_below_01": 16
+          },
+          "NYU": {
+            "scans": 8,
+            "groups": 8,
+            "scan_Dice": 0.03475952945032379,
+            "group_Dice": 0.03475952945032379,
+            "empty_predictions": 4,
+            "Dice_below_01": 7
+          }
+        },
+        "empty_predictions": 43,
+        "Dice_below_01": 54
+      }
+    }
+  },
+  "paired_comparisons": {
+    "T1_NODROP_RAW0-NODROP_RAW1": {
+      "difference": -0.7481891302653199,
+      "ci95": [
+        -0.7779057859410808,
+        -0.7144316328660754
+      ],
+      "paired_units": 46,
+      "role": "primary",
+      "linear_weights": {
+        "NODROP_RAW0": 1.0,
+        "NODROP_RAW1": -1.0
+      }
+    },
+    "T1_NODROP_RAW0-DROP_RAW0": {
+      "difference": -0.6583519876898177,
+      "ci95": [
+        -0.7003843120998137,
+        -0.6131912091320756
+      ],
+      "paired_units": 46,
+      "role": "secondary",
+      "linear_weights": {
+        "NODROP_RAW0": 1.0,
+        "DROP_RAW0": -1.0
+      }
+    },
+    "T1_NODROP_RAW1-DROP_RAW1": {
+      "difference": 0.01943945623022659,
+      "ci95": [
+        0.008585253714460768,
+        0.031035600569092374
+      ],
+      "paired_units": 46,
+      "role": "secondary",
+      "linear_weights": {
+        "NODROP_RAW1": 1.0,
+        "DROP_RAW1": -1.0
+      }
+    },
+    "T1_MUTING_EFFECT_NODROP-DROP": {
+      "difference": -0.6777914439200442,
+      "ci95": [
+        -0.7189442671468501,
+        -0.632661896817411
+      ],
+      "paired_units": 46,
+      "role": "secondary",
+      "linear_weights": {
+        "NODROP_RAW0": 1.0,
+        "NODROP_RAW1": -1.0,
+        "DROP_RAW0": -1.0,
+        "DROP_RAW1": 1.0
+      }
+    },
+    "T1_NODROP_RAW0-SSC4": {
+      "difference": -0.6691993175887719,
+      "ci95": [
+        -0.7100950696675516,
+        -0.6255947373596915
+      ],
+      "paired_units": 46,
+      "role": "secondary",
+      "linear_weights": {
+        "NODROP_RAW0": 1.0,
+        "SSC4": -1.0
+      }
+    },
+    "T1_NODROP_RAW1-SSC4": {
+      "difference": 0.07898981267654773,
+      "ci95": [
+        0.05916391665400045,
+        0.10130268520551823
+      ],
+      "paired_units": 46,
+      "role": "secondary",
+      "linear_weights": {
+        "NODROP_RAW1": 1.0,
+        "SSC4": -1.0
+      }
+    },
+    "T2_NODROP_RAW0-NODROP_RAW1": {
+      "difference": 0.004381497084312807,
+      "ci95": [
+        -0.004622881735772744,
+        0.015138246459880088
+      ],
+      "paired_units": 53,
+      "role": "primary",
+      "linear_weights": {
+        "NODROP_RAW0": 1.0,
+        "NODROP_RAW1": -1.0
+      }
+    },
+    "T2_NODROP_RAW0-DROP_RAW0": {
+      "difference": -0.47786653807054236,
+      "ci95": [
+        -0.5389990029707208,
+        -0.4151325968842711
+      ],
+      "paired_units": 53,
+      "role": "secondary",
+      "linear_weights": {
+        "NODROP_RAW0": 1.0,
+        "DROP_RAW0": -1.0
+      }
+    },
+    "T2_NODROP_RAW1-DROP_RAW1": {
+      "difference": -0.05238042412635475,
+      "ci95": [
+        -0.0804244475919158,
+        -0.029048388614543952
+      ],
+      "paired_units": 53,
+      "role": "secondary",
+      "linear_weights": {
+        "NODROP_RAW1": 1.0,
+        "DROP_RAW1": -1.0
+      }
+    },
+    "T2_MUTING_EFFECT_NODROP-DROP": {
+      "difference": -0.4254861139441876,
+      "ci95": [
+        -0.48355301143941354,
+        -0.36652590325766515
+      ],
+      "paired_units": 53,
+      "role": "secondary",
+      "linear_weights": {
+        "NODROP_RAW0": 1.0,
+        "NODROP_RAW1": -1.0,
+        "DROP_RAW0": -1.0,
+        "DROP_RAW1": 1.0
+      }
+    },
+    "T2_NODROP_RAW0-SSC4": {
+      "difference": -0.48751269063238023,
+      "ci95": [
+        -0.548417072615165,
+        -0.4248567397401952
+      ],
+      "paired_units": 53,
+      "role": "secondary",
+      "linear_weights": {
+        "NODROP_RAW0": 1.0,
+        "SSC4": -1.0
+      }
+    },
+    "T2_NODROP_RAW1-SSC4": {
+      "difference": -0.491894187716693,
+      "ci95": [
+        -0.5542984311611938,
+        -0.4275905657239109
+      ],
+      "paired_units": 53,
+      "role": "secondary",
+      "linear_weights": {
+        "NODROP_RAW1": 1.0,
+        "SSC4": -1.0
+      }
+    }
+  },
+  "bootstrap": {
+    "seed": 20261102,
+    "replicates": 10000,
+    "interval": "Unadjusted95%paired percentile",
+    "units": "Sorted46T1cases /53T2operational groups after scan averaging; shared draws within domain",
+    "contrasts": 12,
+    "difference_of_muting_effects": "(NODROP_RAW0-NODROP_RAW1)-(DROP_RAW0-DROP_RAW1); paired score contrast, not a mask pair"
+  },
+  "cached_dropout_standard_contrasts": {
+    "T1_RAW0-SSC4": {
+      "difference": -0.010847329898954225,
+      "ci95": [
+        -0.023192321452565497,
+        0.0006024197796950068
+      ],
+      "paired_units": 46
+    },
+    "T1_RAW1-SSC4": {
+      "difference": 0.05955035644632114,
+      "ci95": [
+        0.04121862475562009,
+        0.08212934406536755
+      ],
+      "paired_units": 46
+    },
+    "T1_RAW0-RAW1": {
+      "difference": -0.07039768634527536,
+      "ci95": [
+        -0.09894936468520613,
+        -0.048550499274569996
+      ],
+      "paired_units": 46
+    },
+    "T2_RAW0-SSC4": {
+      "difference": -0.009646152561837935,
+      "ci95": [
+        -0.02173789579207899,
+        0.002891177853185312
+      ],
+      "paired_units": 53
+    },
+    "T2_RAW1-SSC4": {
+      "difference": -0.43951376359033834,
+      "ci95": [
+        -0.49922937622478125,
+        -0.378843105802344
+      ],
+      "paired_units": 53
+    },
+    "T2_RAW0-RAW1": {
+      "difference": 0.4298676110285005,
+      "ci95": [
+        0.36938815288048615,
+        0.48901714642001964
+      ],
+      "paired_units": 53
+    }
+  },
+  "training_history": {
+    "path": "ssc4-terminal100-training.csv",
+    "rows": 300,
+    "epochs_per_recipe": 100,
+    "patch_validation_raw_policy": "enabled for DROP and NODROP; SSC4 contains no raw plane",
+    "source_precision": "SSC4 exported native logger precision; DROP/NODROP retained logs rounded at logging time",
+    "discarded_no_drop_incomplete_native_epochs": [
+      14,
+      59
+    ]
+  }
+}
