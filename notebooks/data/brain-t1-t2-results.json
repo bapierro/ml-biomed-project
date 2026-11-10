@@ -1,0 +1,72 @@
+{
+  "status": "COMPLETE",
+  "n_subjects": 97,
+  "n_cells": 388,
+  "means": {
+    "RAW_T1": 0.7433847482953341,
+    "RAW_T2": 0.069812685275961,
+    "SSC4_T1": 0.643266019986639,
+    "SSC4_T2": 0.6192109562287726
+  },
+  "paired_comparisons": {
+    "RAW_T2-RAW_T1": {
+      "difference": -0.6735720630193729,
+      "ci95": [
+        -0.711327670764011,
+        -0.6310965078193729
+      ]
+    },
+    "SSC4_T2-SSC4_T1": {
+      "difference": -0.024055063757866545,
+      "ci95": [
+        -0.046868373731882,
+        -0.0014650911522142952
+      ]
+    },
+    "SSC4_T2-RAW_T2": {
+      "difference": 0.5493982709528116,
+      "ci95": [
+        0.5089611760199125,
+        0.5864888867389608
+      ]
+    },
+    "SSC4_T1-RAW_T1": {
+      "difference": -0.10011872830869495,
+      "ci95": [
+        -0.12166697729074438,
+        -0.07875575093025762
+      ]
+    },
+    "(SSC4_T2-SSC4_T1)-(RAW_T2-RAW_T1)": {
+      "difference": 0.6495169992615065,
+      "ci95": [
+        0.6061497980521708,
+        0.6889315241954749
+      ]
+    }
+  },
+  "bootstrap": {
+    "seed": 20261104,
+    "draws": 10000,
+    "unit": "held-out subject",
+    "interval": "unadjusted paired percentile 95%"
+  },
+  "failures": {
+    "RAW_T1": {
+      "empty": 0,
+      "dice_below_0p1": 2
+    },
+    "RAW_T2": {
+      "empty": 0,
+      "dice_below_0p1": 77
+    },
+    "SSC4_T1": {
+      "empty": 0,
+      "dice_below_0p1": 2
+    },
+    "SSC4_T2": {
+      "empty": 0,
+      "dice_below_0p1": 2
+    }
+  }
+}

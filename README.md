@@ -62,6 +62,13 @@ rerunning inference. A complete bundle works offline. Optional one-scan inferenc
 and provenance are also included. See [validation results](docs/t2-validation-results.md)
 for cohort details and the earlier SSC8 comparisons.
 
+The [brain T1 → T2 notebook](notebooks/brain-t1-t2.ipynb) applies the same 2D
+pipeline to whole-tumor segmentation in the Medical Segmentation Decathlon.
+It compares raw MRI and SSC4 after 50 epochs of T1 training and uses paired
+T1 and T2 scans from the same 97 held-out subjects. The notebook includes local loading instructions and checkpoint hashes.
+Released models: [RAW release](https://github.com/bapierro/ml-biomed-project/releases/tag/brain-raw-t1-50ep-v1) ([model ZIP](https://github.com/bapierro/ml-biomed-project/releases/download/brain-raw-t1-50ep-v1/brain-raw-t1-50ep-v1-model.zip)) and
+[SSC4 release](https://github.com/bapierro/ml-biomed-project/releases/tag/brain-ssc4-t1-50ep-v1) ([model ZIP](https://github.com/bapierro/ml-biomed-project/releases/download/brain-ssc4-t1-50ep-v1/brain-ssc4-t1-50ep-v1-model.zip)).
+
 [Earlier UniverSeg/TotalSegmentator examples](notebooks/data-visualization-and-universeg.ipynb) and the
 [environment check](notebooks/environment-check.ipynb) are also retained.
 
